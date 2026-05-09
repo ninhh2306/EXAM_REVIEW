@@ -1,0 +1,986 @@
+/* ============================================================
+   1. CẤU TRÚC DÙNG CHUNG (GOM NHÓM ĐẦU FILE)
+   ============================================================ */
+:root {
+    --primary-color: #4e73df;
+    --primary-hover: #2e59d9;
+    --navy-dark: #1a237e;
+    --text-main: #495057;
+    --border-color: #ddd;
+}
+
+/* =================================
+        SIDEBAR
+   ================================= */
+
+/* Logo Sidebar */
+
+.sidebar .sidebar-brand .sidebar-brand-icon img {
+    height: 100px;
+    height: auto;
+    mix-blend-mode: multiply;
+    display: block;
+}
+
+/* Hiệu ứng khi rê chuột vào */
+.sidebar-brand:hover {
+    opacity: 0.8;
+    text-decoration: none;
+}
+
+
+
+.admin-page {
+    padding: 0;
+    background: transparent;
+    margin-bottom: 25px;
+}
+
+.admin-content {
+    padding: 20px 30px;
+}
+
+
+/* Breadcrumb - Tối ưu khoảng cách */
+.admin-page .breadcrumb {
+    padding-left: 0;
+    margin: 0 0 0 0;
+    font-size: 14px;
+    color: #888;
+}
+.breadcrumb a { color: #5c67f2; text-decoration: none; }
+.breadcrumb span { margin: 0 5px; }
+
+/* Tiêu đề trang & Modal - Đậm và rõ nét */
+.admin-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--navy-dark);
+    margin-bottom: 20px;
+    letter-spacing: -0.5px;
+}
+
+h4, .h4 {
+    font-size: 26px !important;
+    font-weight: 600 !important; /* Đã chỉnh lên 700 cho đậm theo ý bạn */
+    color: var(--navy-dark);
+}
+
+
+/* Hệ thống Nút bấm chung */
+.admin-btn {
+    display: inline-block; /* Quan trọng: để thẻ a nhận diện đầy đủ padding/margin như một cái nút */
+    padding: 8px 20px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+    
+    /* Thêm 2 dòng này */
+    text-decoration: none !important; 
+    color: inherit; /* Giúp nút không bị đổi sang màu xanh dương mặc định của link */
+}
+
+/* Đảm bảo khi di chuột vào cũng không hiện gạch chân */
+.admin-btn:hover {
+    text-decoration: none !important;
+}
+
+
+.btn-save, .btn-add {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+}
+
+.btn-save:hover, .btn-add:hover {
+    background-color: var(--primary-hover) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(78, 115, 223, 0.3);
+}
+
+.btn-cancel {
+    background-color: #b8c1c2;
+    color: white !important;
+}
+
+.btn-cancel:hover {
+    background-color: #7f8c8d;
+    transform: translateY(-1px);
+}
+
+/* Input & Select dùng chung */
+.admin-search, .select, .modal-box input, .modal-box select {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 14px;
+    outline: none;
+    transition: 0.2s;
+}
+
+.admin-search:focus, .modal-box input:focus, .modal-box select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(78, 115, 223, 0.2);
+}
+
+/* ============================================================
+   2. TRANG DANH SÁCH (TABLE & TOOLBAR)
+   ============================================================ */
+
+.admin-toolbar-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.admin-toolbar-right .admin-search {
+    width: 350px;
+}
+
+/* Table Style */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto; /* Tạo thanh cuộn ngang khi bảng quá rộng */
+    -webkit-overflow-scrolling: touch;
+}
+
+.admin-table {
+    min-width: 1000px;
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    background: #fff;
+}
+
+.admin-table thead {
+    background: #f1f4f9; /* Màu nền xám xanh nhẹ */
+}
+
+.admin-table th {
+    padding: 15px 12px;
+    font-weight: 700;    /* Đậm hẳn lên */
+    color: #2c3e50;      /* Màu xanh đen đậm */
+    border-bottom: 2px solid #dee2e6; /* Đường kẻ đậm hơn để tách biệt header */
+    text-align: left;
+    font-size: 17px;
+    white-space: nowrap;
+}
+
+
+.admin-table td {
+    padding: 15px 12px;
+    border-bottom: 1px solid #f0f0f0;
+    color: #212529;      /* Màu đen gần như tuyệt đối để chữ rõ nét */
+    font-size: 16px;
+}
+
+.admin-table tr:hover {
+    background: #f8f9ff; /* Xanh cực nhẹ */
+    transition: 0.2s;
+}
+
+/* Cột hành động (Căn phải)  */
+.admin-table td:last-child, .admin-table th:last-child {
+    text-align: right;
+    padding-right: 15px;
+}
+
+/* 2. Ép các cột chứa text ngắn không được tự ý xuống dòng */
+/* Cột ID (1), Ngày tạo (5), Tác giả (6), Hành động (7) */
+.admin-table td:nth-child(1),
+.admin-table td:nth-child(5),
+.admin-table td:nth-child(6),
+.admin-table td:last-child {
+    white-space: nowrap;
+}
+
+/* 3. Khống chế cột Slug (thường rất dài) không được chiếm quá nhiều diện tích */
+.admin-table td:nth-child(3),
+.admin-table td:nth-child(4) {
+    max-width: 200px; /* Giới hạn độ rộng cột slug */
+    overflow: hidden;
+    text-overflow: ellipsis; /* Hiện dấu ... nếu dài quá */
+    white-space: nowrap;
+}
+
+/* Nút Icon Sửa/Xóa */
+.admin-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.action-btn {
+    text-decoration: none !important;
+    display: inline-block; 
+}
+
+
+.action-btn:hover {
+    text-decoration: none !important;
+}
+
+.btn-edit, .btn-delete {
+    background: #fff;
+    border: 1px solid #dcdfe6;
+    width: 40px; 
+    height: 40px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+    cursor: pointer;
+}
+
+.btn-edit { color: #ff9800; }
+.btn-edit:hover { border-color: #ff9800; background: #fff9f0; }
+
+.btn-delete { color: #f56c6c; }
+.btn-delete:hover { border-color: #f56c6c; background: #fef0f0; }
+
+
+.btn-danger {
+    background-color: #f56c6c !important;
+    color: #fff !important;
+    padding: 0 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    
+    display: inline-flex;    
+    align-items: center;     
+    height: 38px;             
+    border: 1px solid transparent; 
+}
+
+.btn-danger:hover {
+    background-color: #fef0f0 !important; /* Màu nền đỏ nhạt */
+    color: #f56c6c !important;            /* Chữ chuyển sang màu đỏ chính */
+    border-color: #f56c6c;               /* Hiển thị viền đỏ */
+    transition: all 0.3s ease;            /* Thêm hiệu ứng mượt mà */
+}
+
+
+/* ========================================
+    TAB PAGINATION 
+ ======================================== */
+.tab-pagination-wrapper {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 16px;
+    padding: 0 2px 8px;
+}
+
+.tab-pagination {
+    display: flex;
+    gap: 4px;           
+    background: transparent; 
+    border: none;       
+    box-shadow: none;   
+    overflow: visible;  
+}
+
+.tab-pagination .tab-btn {
+    display: inline-block;
+    padding: 8px 15px;
+    border: 1px solid #d0d5dd; 
+    border-radius: 8px;       
+    background: #fff;
+    color: #555;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    line-height: 1.5;
+}
+
+
+.tab-pagination .tab-btn:hover {
+    background: #f0f4ff;
+    color: #3b6ff6;
+}
+
+.tab-pagination .tab-btn.active {
+    background: #3b6ff6;
+    color: #fff;
+    border-color: #3b6ff6; 
+    font-weight: 700;
+}
+
+
+/* ============================================================
+   3. MODAL & FORM 
+   ============================================================ */
+
+.modal {
+    transition: opacity .15s linear !important;
+}
+
+/* Khối bao quanh nội dung Modal */
+.modal-box {
+    padding: 25px;
+    border-radius: 12px;
+    justify-content: center;
+}
+
+.modal-box label {
+    display: block;
+    font-weight: 600;
+    margin-top: 15px; 
+    margin-bottom: 6px;
+    color: #333;
+    text-align: left; 
+}
+
+
+.modal-box input,
+.modal-box select {
+    width: 100% !important;
+    height: 42px;           
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    display: block;         
+    box-sizing: border-box; 
+}
+
+/* Riêng cho Dropdown (Select) */
+.modal-box select {
+    background-color: #fff;
+    cursor: pointer;
+    display: block;
+    width: 100% !important;
+    height: 42px !important;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    box-sizing: border-box;
+    
+    /* Hiện lại mũi tên mặc định của hệ thống */
+    appearance: auto !important; 
+    -webkit-appearance: menulist !important;
+    -moz-appearance: menulist !important;
+}
+
+.modal-box .form-group {
+    margin-bottom: 20px;
+}
+
+/* Hiệu ứng khi click vào ô nhập/chọn */
+.modal-box input:focus,
+.modal-box select:focus {
+    border-color: #4e73df;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(78, 115, 223, 0.2);
+}
+
+/* Căn chỉnh group các nút bấm bên dưới */
+.modal-box .admin-actions {
+    margin-top: 25px;
+    display: flex;
+    justify-content: center; /* Căn giữa các nút bấm Lưu/Hủy */
+    gap: 10px;
+}
+
+/* Reset lại kích thước modal nếu nó bị méo */
+.modal-content.modal-box {
+    width: 400px;
+    max-width: 95%;
+    margin: 0 auto;
+    height: auto;
+}
+
+
+.delete-confirm-text{
+    text-align: center;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+
+.text-center { margin-top: 5px !important; }
+
+
+
+.modal-footer-custom {
+    margin-top: 15px !important;
+}
+
+/* Alert */ .alert-custom { padding: 10px; border-radius: 5px; margin-bottom: 10px; } 
+/* ================== ALERT CHUNG ================== */ 
+
+ /* SUCCESS */ 
+.alert-success { 
+    padding: 15px 20px; 
+    font-weight: 600; 
+    border-radius: 8px; 
+    display: flex; 
+    align-items: 
+    center; 
+    gap: 10px; 
+    overflow: hidden; 
+    animation: slideInAndCollapse 2.5s ease forwards; 
+} 
+
+.alert-success { 
+    background: #d4edda; 
+    color: #155724; 
+    border: 1px solid #c3e6cb; 
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);} 
+
+.alert-success::before {
+    content: "✓";
+    font-weight: 900; 
+} 
+
+
+
+/* ERROR */ 
+.alert-error {
+    padding: 15px 20px;
+    background: #f55d5f;
+    color: white;
+    border-radius: 8px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    overflow: hidden;
+    animation: slideInAndCollapse 2.5s ease forwards;
+}
+
+.alert-error::before {
+    content: "✕";
+    font-weight: 900;
+}
+
+
+/* Animation*/
+@keyframes slideInAndCollapse {
+    0% {
+        opacity: 0;
+        transform: translateY(-10px);
+        max-height: 0;
+        margin-bottom: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+    10% {
+        opacity: 1;
+        transform: translateY(0);
+        max-height: 100px;
+        margin-bottom: 20px;
+        padding-top: 15px;
+        padding-bottom: 15px;
+    }
+    85% {
+        opacity: 1;
+        transform: translateY(0);
+        max-height: 100px;
+        margin-bottom: 20px;
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-20px);
+        max-height: 0;
+        margin-bottom: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+}
+
+
+
+
+
+
+/* ============================================================
+   4. TRANG THÊM / CẬP NHẬT 
+   ============================================================ */
+
+/* CARD TO & THOÁNG */
+.subject-card {
+    width: 100%;
+    max-width: 1250px;   /* tăng rộng */
+    margin: 0 auto;
+    padding: 25px 40px;
+    border-radius: 18px;
+}
+
+/* GRID 2 CỘT */
+.form-grid-2 {
+    display: flex;
+    gap: 80px; /* khoảng cách 2 bên */
+}
+
+/* LEFT */
+.form-left {
+    flex: 1;
+}
+
+/* RIGHT */
+.form-right {
+    width: 280px;
+}
+
+/* LABEL ĐẬM HƠN */
+.form-group label,
+.form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 6px;
+}
+
+/* INPUT */
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #dcdfe6;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+
+.subject-field label {
+    display: block;
+}
+
+.subject-field select {
+    width: 260px !important;
+}
+
+
+/* TEXTAREA */
+textarea {
+    resize: vertical;
+}
+
+.textarea-sm {
+    height: 42px;
+}
+
+.textarea-lg {
+    height: 70px;
+}
+
+/* IMAGE BOX */
+.image-upload-box {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+    width: 220px;
+}
+
+
+/* KHUNG ẢNH */
+.image-preview-wrapper {
+    width: 270px;
+    height: 190px;
+    border: 2px dashed #dcdfe6;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fafafa;
+    display: flex; /* Thêm để căn giữa chữ "Chưa có ảnh" bên trong */
+    align-items: center;
+    justify-content: center;
+    position: relative; 
+}
+
+.image-preview-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+
+/* TEXT "CHƯA CÓ ẢNH" */
+.image-placeholder {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* Căn giữa tuyệt đối */
+    width: 100%;
+    text-align: center;
+    font-size: 13px;
+    color: #999;
+    pointer-events: none; /* Để không cản trở việc click vào khung */
+}
+
+/* BUTTON CHỌN ẢNH (FIX CHÌM) */
+.upload-btn {
+    width: fit-content;    
+    display: block;
+    margin: 8px 0 0 135px; /* Đẩy lề trái 135px (tức là 1/2 của 270px) */
+    transform: translateX(-50%); /* Dịch ngược lại 50% để tâm nút trùng tâm ảnh */
+    background: #4e73df;
+    color: white;
+    padding: 8px 20px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.upload-btn:hover {
+    background: #2e59d9;
+    box-shadow: 0 4px 10px rgba(78, 115, 223, 0.3);
+}
+
+/* TEXT NOTE */
+.text-muted {
+    font-size: 12px;
+    color: #888;
+    white-space: nowrap;
+}
+
+/* FULL WIDTH */
+.form-group.full {
+    margin-top: 20px;
+}
+
+/* ACTION */
+.form-actions {
+    margin-top: 25px;
+    text-align: center;
+}
+
+/* =========================================================
+   CATEGORY
+   ========================================================= */
+
+.category-description-input{
+    width: 100% !important;
+    min-height: 84px !important;
+
+    padding: 10px 12px;
+
+    border: 1px solid #ddd;
+    border-radius: 6px;
+
+    font-size: 14px;
+
+    box-sizing: border-box;
+
+    resize: vertical;
+}
+
+.category-description-input:focus{
+    border-color: #4e73df;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(78, 115, 223, 0.2);
+}
+
+
+/* ============================================================
+   LESSON FORM
+   ============================================================ */
+
+.lesson-card{
+    background: #fff;
+    border-radius: 18px;
+    padding: 30px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.05);
+    margin-top: 20px;
+}
+
+/* ===== ROW 4 DROPDOWN ===== */
+.lesson-row-4{
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin-bottom: 20px;
+}
+
+/* ===== NAME + SLUG SAME ROW ===== */
+.lesson-row-name{
+    display: grid;
+    grid-template-columns: 3fr 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.lesson-group label{
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #333;
+    font-size: 14px;
+}
+
+.lesson-group select,
+.lesson-group input{
+    width: 100%;
+    height: 44px;
+    padding: 0 14px;
+    border: 1px solid #dcdfe6;
+    border-radius: 10px;
+    background: #fff;
+    font-size: 14px;
+    transition: .2s;
+    box-sizing: border-box;
+}
+
+.lesson-group select:focus,
+.lesson-group input:focus{
+    border-color: #4e73df;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(78,115,223,.15);
+}
+
+
+
+/* ===== EDITOR ===== */
+.lesson-editor{
+    margin-top: 10px;
+}
+
+.tox-tinymce{
+    border-radius: 12px !important;
+    overflow: hidden;
+}
+
+/* ===== ACTION ===== */
+.lesson-actions{
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 30px;
+}
+
+.ck-editor__editable{
+    min-height:300px;
+    max-height: 500px; /* Cao nhất là 800px, quá sẽ hiện scroll */
+    overflow-y: auto;
+}
+.ck-powered-by {
+    display: none !important;
+}
+
+
+/* =========================================================
+   POST FORM
+========================================================= */
+
+.post-card-admin {
+    max-width: 1250px;
+    margin: auto;
+    padding: 35px;
+    border-radius: 18px;
+}
+
+
+/* TOP */
+.post-top-grid {
+    display: grid;
+    grid-template-columns: 700px 360px;
+    gap: 35px;
+    align-items: start;
+    justify-content: space-between;
+}
+
+
+/* LEFT */
+.post-form-left {
+    width: 100%;
+}
+
+
+/* FIELD */
+.post-field {
+    margin-bottom: 22px;
+}
+
+.post-field label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+}
+
+
+/* DROPDOWN NGẮN */
+.post-field select {
+    width: 260px;
+}
+
+
+/* INPUT */
+.post-field input,
+.post-field select {
+    height: 46px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 0 14px;
+    font-size: 14px;
+    transition: .2s;
+    background: white;
+}
+
+
+/* TITLE + SLUG FULL */
+.post-field input {
+    width: 100%;
+}
+
+
+.post-field input:focus,
+.post-field select:focus {
+    border-color: #4e73df;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(78,115,223,.12);
+}
+
+
+/* =========================================================
+   IMAGE
+========================================================= */
+
+.post-thumbnail-box {
+    width: 100%;
+    display: flex;
+    flex-direction: column;  
+    align-items: center;
+}
+
+.post-thumbnail-box label {
+    align-self: flex-start;
+    text-align: left;
+}
+
+
+/* KHUNG ẢNH */
+.post-thumbnail-preview {
+    width: 100%;
+    height: 240px;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #eef1f6;
+    border: 1px solid #e5e7ef;
+    position: relative;
+}
+
+
+/* ẢNH */
+.post-thumbnail-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    z-index: 1;
+    
+}
+
+
+/* PLACEHOLDER */
+.post-thumbnail-placeholder {
+    flex-direction: column;
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #888;
+    font-size: 14px;
+    z-index: 2;
+}
+
+
+/* BUTTON GIỐNG SUBJECT */
+.post-upload-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-top: 15px;
+    padding: 10px 20px;
+
+    border-radius: 8px;
+    background: #4e73df;
+    color: #fff;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    cursor: pointer;
+    transition: .2s;
+    width: fit-content;
+}
+
+.post-upload-btn:hover {
+    background: #355fd4;
+}
+
+
+/* NOTE */
+.post-upload-note {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #777;
+    text-align: center;
+}
+
+
+/* =========================================================
+   EDITOR
+========================================================= */
+
+.post-editor {
+    margin-top: 30px;
+}
+
+.post-editor label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.ck-editor__editable {
+    min-height: 300px;
+}
+
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
+.post-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 35px;
+}
+
+
+
+
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+/* ===== LESSON FORM ===== */
+@media(max-width: 992px){
+
+    .lesson-row-3{
+        grid-template-columns: 1fr;
+    }
+
+}
+
+
+
+
