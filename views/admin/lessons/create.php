@@ -4,9 +4,10 @@
 /** @var array $flashOld */
 
 $errorMessages = [
-    'sort_exists' => 'Số thứ tự này đã có bài học, vui lòng chọn lại!',
     'slug_exists' => 'Slug đã tồn tại trong chương học này!',
     'name_exists' => 'Tên bài học đã tồn tại trong chương học này!',
+    'empty_content' => 'Nội dung bài học không được để trống!',
+    'empty_fields'  => 'Vui lòng điền đầy đủ thông tin!',
 ];
 
 $old = $flashOld ?? [];
@@ -30,7 +31,7 @@ $old = $flashOld ?? [];
 
         <?php if ($flashError): ?>
             <div class="alert-error mb-3">
-                <?= $errorMessages[$flashError] ?? 'Có lỗi xảy ra!' ?>
+                <?= htmlspecialchars($errorMessages[$flashError] ?? $flashError) ?>
             </div>
         <?php endif; ?>
 
@@ -75,13 +76,11 @@ $old = $flashOld ?? [];
                 </div>
 
                 <div class="lesson-group">
-                    <label>Số thứ tự bài học</label>
-                    <input type="number"
-                           name="sortOrder"
-                           id="lesson_sort"
-                           min="1"
-                           value="<?= htmlspecialchars($old['sortOrder'] ?? '') ?>"
-                           required>
+                    <label>Vị trí hiển thị</label>
+                    <select name="positionValue" id="lessonPositionSelect">
+                        <option value="last">Hiển thị cuối cùng</option>
+                        <option value="first">Hiển thị đầu tiên</option>
+                    </select>
                 </div>
 
             </div>
@@ -107,11 +106,28 @@ $old = $flashOld ?? [];
 
             </div>
 
+            <div class="lesson-group lesson-status">
+                <label>Trạng thái</label>
+
+                <label class="switch">
+                    <input type="checkbox"
+                        name="isActive"
+                        value="1"
+                        <?= (int)($old['isActive'] ?? 1) === 1
+                                ? 'checked'
+                                : '' ?>>
+
+                    <span class="slider round"></span>
+                </label>
+
+            </div>
+
             <div class="lesson-group lesson-editor">
                 <label>Nội dung bài học</label>
                 <textarea name="content"
                           id="lessonEditor"><?= htmlspecialchars($old['content'] ?? '') ?></textarea>
             </div>
+
 
             <div class="lesson-actions">
                 <button type="submit" class="admin-btn btn-save">Lưu</button>
@@ -124,4 +140,36 @@ $old = $flashOld ?? [];
 
 </div>
 
-<script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
+
+
+
+<?php ob_start(); ?>
+<script>
+function loadLessonPositions(selectedValue = 'last') {
+    const chapterId = $('#chapterSelect').val();
+    if (!chapterId) return;
+
+    $.get('/admin/ajax/lessons-by-chapter?chapter_id=' + chapterId, function (data) {
+        let html = `
+            <option value="last">Hiển thị cuối cùng</option>
+            <option value="first">Hiển thị đầu tiên</option>
+        `;
+
+        if (Array.isArray(data) && data.length > 0) {
+            html += `<optgroup label="Hiển thị sau...">`;
+            $.each(data, function (i, lesson) {
+                html += `
+                    <option value="after-${lesson.lessonId}">
+                        Bài ${lesson.sortOrder}: ${lesson.lessonName}
+                    </option>
+                `;
+            });
+            html += `</optgroup>`;
+        }
+
+        $('#lessonPositionSelect').html(html);
+        $('#lessonPositionSelect').val(selectedValue);
+    });
+}
+</script>
+<?php $pageScripts = ob_get_clean(); ?>

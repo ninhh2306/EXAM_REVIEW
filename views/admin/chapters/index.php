@@ -54,9 +54,19 @@ $oldSlug      = $flashOld['slug']      ?? '';
         <div class="alert-success" id="autoAlert"><?= $msg ?></div>
     <?php endif; ?>
 
+    <?php if (isset($_GET['error']) && $_GET['error'] === 'has_lessons'): ?>
+        <div class="alert-error">
+            Không thể xóa chương đang có bài học
+        </div>
+    <?php endif; ?>
+
     <!-- TOOLBAR -->
     <div class="admin-toolbar admin-toolbar-right">
-        <input type="text" class="admin-search" placeholder="Tìm kiếm...">
+
+        <input type="text"
+            class="admin-search"
+            id="chapterSearch"
+            placeholder="Tìm kiếm chương học...">
 
         <button class="admin-btn btn-add mt-2" onclick="openAddChapter()">
             + Thêm
@@ -75,13 +85,14 @@ $oldSlug      = $flashOld['slug']      ?? '';
                 <th>Hành động</th>
             </tr>
         </thead>
-        <tbody>
+        
+        <tbody id="chapterTableBody">
             <?php foreach ($chapters as $c): ?>
             <tr>
                 <td><?= $c['chapterId'] ?></td>
                 <td><?= htmlspecialchars($c['gradeName']) ?></td>
                 <td><?= htmlspecialchars($c['subjectName']) ?></td>
-                <td><?= htmlspecialchars($c['chapterName']) ?></td>
+                <td>Chương <?= $c['sortOrder'] ?>: <?= htmlspecialchars($c['chapterName']) ?></td>
                 <td><?= htmlspecialchars($c['slug']) ?></td>
                 <td>
                     <div class="admin-actions">
@@ -113,7 +124,7 @@ $oldSlug      = $flashOld['slug']      ?? '';
     <!-- TAB PAGINATION -->
     <?php if ($tabCount > 1): ?>
     <?php $baseUrl = '/admin/chapters'; ?>
-    <div class="tab-pagination-wrapper">
+    <div class="tab-pagination-wrapper" id="chapterPagination">
         <div class="tab-pagination">
             <?php for ($i = 1; $i <= $tabCount; $i++): ?>
                 <?php
@@ -143,6 +154,8 @@ $oldSlug      = $flashOld['slug']      ?? '';
 
                 <input type="hidden" name="id" id="id" value="">
 
+                <input type="hidden" id="sortOrder" value="">
+
                 <h4 id="chapterModalTitle" class="text-center mb-3">
                     Thêm chương học
                 </h4>
@@ -167,9 +180,16 @@ $oldSlug      = $flashOld['slug']      ?? '';
                 <label>Tên chương</label>
                 <input type="text" name="name" id="name" required value="">
 
-                <label>Số thứ tự chương học</label>
-                <input type="number" name="sortOrder" id="sortOrder"
-                       min="1" required value="">
+                <label>Vị trí hiển thị</label>
+                <select name="positionValue" id="positionSelect">
+                    <option value="last">
+                        Hiển thị cuối cùng
+                    </option>
+
+                    <option value="first">
+                        Hiển thị đầu tiên
+                    </option>
+                </select>
 
                 <label>Slug</label>
                 <input type="text" name="slug" id="slug" readonly value="">
@@ -199,3 +219,33 @@ $oldSlug      = $flashOld['slug']      ?? '';
     </div>
 </div>
 
+
+
+<script>
+
+function loadChapterPositions(selectedValue = 'last') {
+    const subjectId = $('#subjectSelect').val();
+    if (!subjectId) return;
+
+    $.get('/admin/ajax/chapters-by-subject?subject_id=' + subjectId, function(data) {
+        let html = `
+            <option value="last">Hiển thị cuối cùng</option>
+            <option value="first">Hiển thị đầu tiên</option>
+        `;
+        if (Array.isArray(data) && data.length > 0) {
+            html += `<optgroup label="Hiển thị sau...">`;
+            $.each(data, function(i, chapter) {
+                html += `
+                    <option value="after-${chapter.chapterId}">
+                        Chương ${chapter.sortOrder}: ${chapter.chapterName}
+                    </option>
+                `;
+            });
+            html += `</optgroup>`;
+        }
+        $('#positionSelect').html(html);
+        $('#positionSelect').val(selectedValue);
+    });
+}
+
+</script>

@@ -34,10 +34,26 @@ class Post extends Model
     // Lấy chi tiết bài
     public function getBySlug($slug)
     {
-        $sql = "SELECT p.*, c.categoryName, c.slug as categorySlug
-                FROM posts p
-                JOIN category c ON p.categoryId = c.categoryId
-                WHERE p.slug = ? AND p.isActive = 1";
+        $sql = "
+            SELECT 
+                p.*,
+                c.categoryName,
+                c.slug as categorySlug,
+
+                u.fullName as authorName,
+                u.avatar as authorAvatar
+
+            FROM posts p
+
+            JOIN category c
+                ON p.categoryId = c.categoryId
+
+            LEFT JOIN users u
+                ON p.createdBy = u.userId
+
+            WHERE p.slug = ?
+            AND p.isActive = 1
+        ";
 
         return $this->fetch($sql, [$slug]);
     }
@@ -53,7 +69,6 @@ class Post extends Model
                 JOIN category c ON p.categoryId = c.categoryId
                 WHERE p.categoryId = ?
                 AND p.postId != ?
-                AND p.isActive = 1
                 ORDER BY p.createdAt DESC
                 LIMIT $limit";
 
@@ -64,13 +79,97 @@ class Post extends Model
 
     // ================= ADMIN =================
 
+        public function toSlug($str)
+    {
+        $str = strtolower($str);
+
+        $str = preg_replace('/[áàảãạăắằẳẵặâấầẩẫậ]/u', 'a', $str);
+        $str = preg_replace('/[éèẻẽẹêếềểễệ]/u', 'e', $str);
+        $str = preg_replace('/[íìỉĩị]/u', 'i', $str);
+        $str = preg_replace('/[óòỏõọôốồổỗộơớờởỡợ]/u', 'o', $str);
+        $str = preg_replace('/[úùủũụưứừửữự]/u', 'u', $str);
+        $str = preg_replace('/[ýỳỷỹỵ]/u', 'y', $str);
+        $str = preg_replace('/đ/u', 'd', $str);
+
+        // bỏ html
+        $str = strip_tags($str);
+
+        // bỏ ký tự đặc biệt
+        $str = preg_replace('/[^a-z0-9\s-]/', '', $str);
+
+        // space => -
+        $str = preg_replace('/\s+/', '-', trim($str));
+
+        // xóa --
+        $str = preg_replace('/-+/', '-', $str);
+
+        return trim($str, '-');
+    }
+
+
+    public function validateTitle(&$title)
+    {
+        $title = trim($title);
+
+        $title = strip_tags($title);
+
+        $title = preg_replace('/\s+/u', ' ', $title);
+
+        if ($title === '') {
+            return 'Tiêu đề bài viết không được để trống!';
+        }
+
+        if (mb_strlen($title) < 5) {
+            return 'Tiêu đề bài viết quá ngắn!';
+        }
+
+        if (mb_strlen($title) > 255) {
+            return 'Tiêu đề bài viết quá dài!';
+        }
+
+        return null;
+    }
+
+
+    public function validateContent($content)
+    {
+        $plain = strip_tags($content);
+
+        $plain = html_entity_decode($plain);
+
+        $plain = str_replace("\xC2\xA0", ' ', $plain);
+
+        $plain = trim($plain);
+
+        if ($plain === '') {
+            return 'Nội dung bài viết không được để trống!';
+        }
+
+        if (mb_strlen($plain) < 20) {
+            return 'Nội dung bài viết quá ngắn!';
+        }
+
+        return null;
+    }
+
     public function getPaginate($limit, $offset)
     {
         $sql = "
-            SELECT p.*, c.categoryName
+            SELECT 
+                p.*,
+                c.categoryName,
+                u.fullName as authorName
+
             FROM posts p
-            LEFT JOIN category c ON p.categoryId = c.categoryId
+
+            LEFT JOIN category c
+                ON p.categoryId = c.categoryId
+
+            LEFT JOIN users u
+                ON p.createdBy = u.userId
+
             ORDER BY p.postId DESC
+
             LIMIT $limit OFFSET $offset
         ";
 
@@ -96,14 +195,19 @@ class Post extends Model
     }
 
     // check exists
-    public function exists($title, $slug, $id = null)
+    public function exists($categoryId, $title, $slug, $id = null)
     {
         $sql = "
-            SELECT * FROM posts
-            WHERE (title = ? OR slug = ?)
+            SELECT *
+            FROM posts
+            WHERE categoryId = ?
+            AND (
+                title = ?
+                OR slug = ?
+            )
         ";
 
-        $params = [$title, $slug];
+        $params = [$categoryId, $title, $slug];
 
         if ($id) {
             $sql .= " AND postId != ?";
@@ -138,7 +242,7 @@ class Post extends Model
             $data['excerpt'],
             $data['content'],
             $data['createdBy'],
-            1
+            $data['isActive']
         ]);
     }
 
@@ -152,7 +256,8 @@ class Post extends Model
                 slug = ?,
                 thumbnail = ?,
                 excerpt = ?,
-                content = ?
+                content = ?,
+                isActive = ?
             WHERE postId = ?
         ";
 
@@ -163,6 +268,7 @@ class Post extends Model
             $data['thumbnail'],
             $data['excerpt'],
             $data['content'],
+            $data['isActive'],
             $id
         ]);
     }
@@ -175,4 +281,79 @@ class Post extends Model
         return $this->execute($sql, [$id]);
     }
 
+
+
+    // ================= SEARCH =================
+    public function searchPosts($keyword)
+    {
+        $sql = "
+            SELECT 
+                p.*,
+                c.categoryName,
+                c.slug as categorySlug,
+                u.fullName as authorName
+
+            FROM posts p
+
+            LEFT JOIN category c
+                ON p.categoryId = c.categoryId
+
+            LEFT JOIN users u
+                ON p.createdBy = u.userId
+
+            WHERE
+                p.isActive = 1
+
+                AND (
+                    p.title LIKE ?
+                    OR p.slug LIKE ?
+                    OR u.fullName LIKE ?
+                )
+
+            ORDER BY p.postId DESC
+        ";
+
+        return $this->fetchAll($sql, [
+            "%{$keyword}%",
+            "%{$keyword}%",
+            "%{$keyword}%"
+        ]);
+    }
+
+
+    public function searchAdminPosts($keyword)
+    {
+        $sql = "
+            SELECT 
+                p.*,
+                c.categoryName,
+                u.fullName as authorName
+
+            FROM posts p
+
+            LEFT JOIN category c
+                ON p.categoryId = c.categoryId
+
+            LEFT JOIN users u
+                ON p.createdBy = u.userId
+
+            WHERE
+                p.title LIKE ?
+                OR p.slug LIKE ?
+                OR c.categoryName LIKE ?
+                OR u.fullName LIKE ?
+
+            ORDER BY p.postId DESC
+
+            LIMIT 100
+        ";
+
+        return $this->fetchAll($sql, [
+            "%{$keyword}%",
+            "%{$keyword}%",
+            "%{$keyword}%",
+            "%{$keyword}%"
+        ]);
+    }
+    
 }

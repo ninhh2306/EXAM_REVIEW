@@ -29,7 +29,7 @@
         <div class="exam-hero__meta">
             <span style="display: flex; align-items: center; gap: 6px; color: var(--text-sub); font-size: 14px;">
                 <i class="fa-solid fa-file-lines"></i>
-                <?= $exam['totalQuestions'] ?> câu hỏi
+                <?= $exam['realTotalQuestions'] ?> câu hỏi
             </span>
 
             <span style="display: flex; align-items: center; gap: 6px; color: var(--text-sub); font-size: 14px;">
@@ -46,7 +46,7 @@
 <!-- KHU VỰC LÀM BÀI -->
 <section class="exam-section">
     <div class="container">
-        <form id="examForm" method="POST" action="/submit-exam">
+        <form id="examForm" method="POST" action="<?= APP_URL ?>/submit-exam">
             <input type="hidden" name="examId" value="<?= $exam['examId'] ?>">
             <input type="hidden" name="expiredAt" id="expiredAt">
 
@@ -630,4 +630,54 @@ window.addEventListener('pagehide', function (e) {
 });
  
  
+
+
+// ─── KIỂM TRA ĐỀ THI CÒN TỒN TẠI ─────────────────────────────
+(function checkExamAlive() {
+    const CHECK_INTERVAL = 30 * 1000;
+
+    async function ping() {
+        if (_isSubmitting) return;
+        try {
+            const res  = await fetch('/api/exam-check?examId=' + examId);
+            const data = await res.json();
+            if (!data.exists) {
+                clearInterval(timerInterval);
+                clearExamData();
+                showExamDeletedModal();
+            }
+        } catch (e) {}
+    }
+
+    ping(); // ← Gọi ngay khi load
+    setInterval(ping, CHECK_INTERVAL);
+})();
+
+
+
+function showExamDeletedModal() {
+    // Tái dụng submitModal đang có sẵn
+    const modal     = document.getElementById('submitModal');
+    const title     = document.getElementById('modalTitle');
+    const msg       = document.getElementById('modalMsg');
+    const cancelBtn = document.getElementById('modalCancelBtn');
+    const confirmBtn = document.getElementById('modalConfirmBtn');
+
+    title.textContent = 'Đề thi không còn tồn tại';
+    msg.textContent   = 'Đề thi này đã bị xóa. Kết quả của bạn không thể lưu được. Vui lòng quay về trang chủ.';
+
+    cancelBtn.style.display = 'none';
+
+    confirmBtn.textContent  = 'Về trang chủ';
+    confirmBtn.onclick = function () {
+        _isSubmitting = true;
+        clearExamData();
+        sessionStorage.removeItem(SESSION_RELOAD);
+        setTimeout(() => { window.location.href = '/'; }, 0);
+    };
+
+    modal.classList.add('is-open');
+}
+
+
 </script>

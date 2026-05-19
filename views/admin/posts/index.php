@@ -39,8 +39,9 @@
     <div class="admin-toolbar admin-toolbar-right">
 
         <input type="text"
-               class="admin-search"
-               placeholder="Tìm kiếm...">
+                id="postSearch"
+                class="admin-search"
+                placeholder="Tìm kiếm bài viết...">
 
         <a href="/admin/posts/create"
            class="admin-btn btn-add no-underline">
@@ -59,14 +60,14 @@
                     <th>Danh mục</th>
                     <th>Tiêu đề</th>
                     <th>Slug</th>
+                    <th>Trạng thái</th>
                     <th>Ngày tạo</th>
                     <th>Tác giả</th>
                     <th>Hành động</th>
                 </tr>
             </thead>
 
-            <tbody>
-
+            <tbody id="postTableBody">
             <?php if (!empty($posts)): ?>
 
                 <?php foreach ($posts as $p): ?>
@@ -82,6 +83,21 @@
                         </td>
 
                         <td><?= htmlspecialchars($p['slug']) ?></td>
+
+                        <td>
+
+                            <?php if ($p['isActive']): ?>
+                                <span class="badge-status badge-active">
+                                    Hiển thị
+                                </span>
+
+                            <?php else: ?>
+                                <span class="badge-status badge-inactive">
+                                    Ẩn
+                                </span>
+
+                            <?php endif; ?>
+                        </td>
 
                         <td>
                             <?= date('d/m/Y', strtotime($p['createdAt'])) ?>
@@ -131,7 +147,7 @@
     <?php
         $baseUrl = '/admin/posts'; 
     ?>
-    <div class="tab-pagination-wrapper">
+    <div class="tab-pagination-wrapper" id="postPagination">
         <div class="tab-pagination">
             <?php for ($i = 1; $i <= $tabCount; $i++): ?>
                 <?php
@@ -153,15 +169,12 @@
 
 <!-- DELETE MODAL -->
 <div class="modal fade" id="deleteModal">
-
     <div class="modal-dialog modal-dialog-centered">
 
         <div class="modal-content modal-box">
-
             <p class="delete-confirm-text">Bạn chắc chắn muốn xóa bài viết này?</p>
 
             <div class="text-center mt-3">
-
                 <a href="#"
                    id="deleteLink"
                    class="admin-btn btn-danger">
@@ -173,11 +186,8 @@
                         data-dismiss="modal">
                     Hủy
                 </button>
-
             </div>
-
         </div>
-
     </div>
-
 </div>
+

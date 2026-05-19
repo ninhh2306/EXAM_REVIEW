@@ -27,6 +27,12 @@
         ];
     ?>
 
+    <?php if (isset($_GET['error']) && $_GET['error'] === 'has_exams'): ?>
+        <div class="alert-error" id="autoAlert">
+            Không thể xóa bài học đang có đề thi!
+        </div>
+    <?php endif; ?>
+
     <?php if (isset($_GET['success']) && isset($successMessages[$_GET['success']])): ?>
         <div class="alert-success" id="autoAlert">
             <?= $successMessages[$_GET['success']] ?>
@@ -37,8 +43,9 @@
     <div class="admin-toolbar admin-toolbar-right">
 
         <input type="text"
-               class="admin-search"
-               placeholder="Tìm kiếm bài học...">
+                id="lessonSearch"
+                class="admin-search"
+                placeholder="Tìm kiếm bài học...">
 
         <a href="/admin/lessons/create" class="admin-btn btn-add mt-2">
             + Thêm
@@ -57,11 +64,12 @@
                 <th>Chương học</th>
                 <th>Bài học</th>
                 <th>Slug</th>
+                <th>Trạng thái</th>
                 <th>Hành động</th>
             </tr>
         </thead>
 
-        <tbody>
+        <tbody id="lessonTableBody">
 
         <?php if (!empty($lessons)): ?>
 
@@ -69,24 +77,61 @@
 
                 <tr>
 
+                    <!-- ID -->
                     <td><?= $l['lessonId'] ?></td>
 
-                    <td><?= $l['gradeName'] ?></td>
+                    <!-- Grade -->
+                    <td>
+                        <?= htmlspecialchars($l['gradeName']) ?>
+                    </td>
 
-                    <td><?= $l['subjectName'] ?></td>
+                    <!-- Subject -->
+                    <td>
+                        <?= htmlspecialchars($l['subjectName']) ?>
+                    </td>
 
-                    <td><?= $l['chapterName'] ?></td>
+                    <!-- Chapter -->
+                    <td>
+                        <?php if (!empty($l['chapterName'])): ?>
+                            Chương <?= $l['chapterSortOrder'] ?? '' ?>:
+                            <?= htmlspecialchars($l['chapterName']) ?>
+                        <?php else: ?>
+                            <span class="text-muted">Không có</span>
+                        <?php endif; ?>
+                    </td>
 
-                    <td><?= $l['lessonName'] ?></td>
+                    <!-- Lesson -->
+                    <td>
+                        Bài <?= $l['sortOrder'] ?? '' ?>:
+                        <?= htmlspecialchars($l['lessonName']) ?>
+                    </td>
 
-                    <td><?= $l['slug'] ?></td>
+                    <!-- Slug -->
+                    <td><?= htmlspecialchars($l['slug']) ?></td>
 
+                    <!-- STATUS -->
+                    <td>
+
+                        <?php if ($l['isActive']): ?>
+                            <span class="badge-status badge-active">
+                                Hiển thị
+                            </span>
+
+                        <?php else: ?>
+                            <span class="badge-status badge-inactive">
+                                Ẩn
+                            </span>
+
+                        <?php endif; ?>
+                    </td>
+
+                    <!-- ACTION -->
                     <td>
 
                         <div class="admin-actions">
 
                             <a href="/admin/lessons/edit/<?= $l['lessonId'] ?>"
-                               class="action-btn btn-edit">
+                            class="action-btn btn-edit">
                                 ✏
                             </a>
 
@@ -106,7 +151,7 @@
         <?php else: ?>
 
             <tr>
-                <td colspan="7" class="text-center">
+                <td colspan="8" class="text-center">
                     Không có dữ liệu
                 </td>
             </tr>
@@ -122,7 +167,7 @@
     <?php
         $baseUrl = '/admin/lessons'; 
     ?>
-    <div class="tab-pagination-wrapper">
+    <div class="tab-pagination-wrapper" id="lessonPagination">
         <div class="tab-pagination">
             <?php for ($i = 1; $i <= $tabCount; $i++): ?>
                 <?php
@@ -174,3 +219,4 @@
     </div>
 
 </div>
+

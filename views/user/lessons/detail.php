@@ -69,7 +69,6 @@
                                     if ($rl['lessonId'] == $lesson['lessonId']) continue;
                                     if ($count >= 5) break;
 
-                                    // ⚠️ cần chapterSlug
                                     if (empty($rl['chapterSlug'])) continue;
                                 ?>
                                 <li>

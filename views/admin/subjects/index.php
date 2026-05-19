@@ -29,8 +29,10 @@
         ];
 
         $errorMessages = [
-            'exists' => 'Tên hoặc slug môn học đã tồn tại!',
-            'delete_failed' => 'Xóa môn học thất bại!'
+            'exists' => 'Tên hoặc slug môn học đã tồn tại trong khối lớp!',
+            'delete_failed' => 'Xóa môn học thất bại!',
+            'has_chapters' => 'Không thể xóa môn học đang có chương học!',
+            'has_exams'    => 'Không thể xóa môn học đang có đề thi (bao gồm đề THPT/Random)!',
         ];
     ?>
 
@@ -48,7 +50,11 @@
 
     <!-- Toolbar -->
     <div class="admin-toolbar admin-toolbar-right">
-        <input type="text" class="admin-search" placeholder="Tìm kiếm...">
+
+        <input type="text"
+            class="admin-search"
+            id="subjectSearch"
+            placeholder="Tìm kiếm môn học...">
 
         <a href="/admin/subjects/create" class="admin-btn btn-add mt-2">
             + Thêm
@@ -67,7 +73,7 @@
             </tr>
         </thead>
 
-        <tbody>
+        <tbody id="subjectTableBody">
             <?php if (!empty($subjects)): ?>
                 <?php foreach ($subjects as $s): ?>
                 <tr>
@@ -101,7 +107,7 @@
     <?php
         $baseUrl = '/admin/subjects'; 
     ?>
-    <div class="tab-pagination-wrapper">
+    <div class="tab-pagination-wrapper" id="subjectPagination">
         <div class="tab-pagination">
             <?php for ($i = 1; $i <= $tabCount; $i++): ?>
                 <?php

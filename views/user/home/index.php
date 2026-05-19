@@ -1,4 +1,7 @@
-<?php // views/home/index.php — Chỉ chứa HTML nội dung trang chủ ?>
+<?php
+$isLoggedIn = !empty($_SESSION['user_id']);
+?>
+
 
 <!-- =========================================
      HERO
@@ -29,8 +32,13 @@
             </p>
 
             <div class="hero__actions">
-                <a href="<?= $base ?>/register" class="btn btn-primary btn-lg">Bắt đầu ngay</a>
-                <a href="#features" class="btn btn-outline btn-lg">Xem lộ trình</a>
+                <a href="<?= $isLoggedIn ? $_SERVER['REQUEST_URI'] : $base . '/register' ?>"
+                    class="btn btn-primary btn-lg">
+                    Bắt đầu ngay
+                </a>
+                <a href="<?= $_SERVER['REQUEST_URI'] ?>" class="btn btn-outline btn-lg">
+                    Xem lộ trình
+                </a>
             </div>
 
             <div class="hero__social">
@@ -130,7 +138,6 @@
 
             <div class="feature-card feature-card--blue reveal">
                 <div class="feature-card__icon feature-card__icon--blue">
-                        <!-- icon tài liệu -->
                     <i class="fa-solid fa-file-lines" style="color: rgb(30, 83, 178);"></i>
                 </div>
                 <h3 class="feature-card__title">Tài liệu</h3>
@@ -138,12 +145,14 @@
                     Kho tài liệu phong phú, bám sát sách giáo khoa và các chuyên đề
                     nâng cao từ các giáo viên uy tín.
                 </p>
-                <a href="<?= $base ?>/subjects" class="feature-card__link feature-card__link--blue">Khám phá ngay →</a>
+                <a href="<?= $_SERVER['REQUEST_URI'] ?>" 
+                    class="feature-card__link feature-card__link--blue">
+                    Khám phá ngay →
+                </a>
             </div>
 
             <div class="feature-card feature-card--pink reveal" style="transition-delay:.1s">
                 <div class="feature-card__icon feature-card__icon--pink">
-                        <!-- icon tick -->
                     <i class="fa-solid fa-square-check" style="color: rgb(28, 179, 48);"></i>
                 </div>
                 <h3 class="feature-card__title">Ôn luyện trắc nghiệm</h3>
@@ -151,12 +160,14 @@
                     Ngân hàng câu hỏi khổng lồ với lời giải chi tiết giúp bạn
                     rèn luyện kỹ năng và phản xạ làm bài.
                 </p>
-                <a href="<?= $base ?>/exams" class="feature-card__link feature-card__link--pink">Luyện tập →</a>
+                <a href="<?= $_SERVER['REQUEST_URI'] ?>" 
+                    class="feature-card__link feature-card__link--pink">
+                    Luyện tập →
+                </a>
             </div>
 
             <div class="feature-card feature-card--yellow reveal" style="transition-delay:.2s">
                 <div class="feature-card__icon feature-card__icon--yellow">
-                        <!-- icon -->
                     <i class="fa-solid fa-bolt" style="color: rgb(227, 158, 48);"></i>
                 </div>
                 <h3 class="feature-card__title">Tạo đề nhanh</h3>
@@ -164,7 +175,10 @@
                     Tự tạo đề thi theo yêu cầu: chọn môn, chọn chương,
                     chọn mức độ khó chỉ trong vài giây.
                 </p>
-                <a href="<?= $base ?>/exams" class="feature-card__link feature-card__link--yellow">Tạo đề thi →</a>
+                <a href="<?= $_SERVER['REQUEST_URI'] ?>" 
+                    class="feature-card__link feature-card__link--yellow">
+                    Tạo đề thi →
+                </a>
             </div>
 
         </div>
@@ -264,8 +278,14 @@
             <h2 class="cta-box__title">Sẵn sàng để bứt phá điểm số?</h2>
             <p class="cta-box__sub">Tham gia cùng hàng ngàn học sinh khác đã thành công cùng Vui Luyện Thi ngay hôm nay.</p>
             <div class="cta-box__actions">
-                <a href="<?= $base ?>/register" class="btn btn-white">Đăng ký miễn phí</a>
-                <a href="#features" class="btn btn-ghost-white">Tìm hiểu thêm</a>
+                <a href="<?= $isLoggedIn ? $_SERVER['REQUEST_URI'] : $base . '/register' ?>" 
+                    class="btn btn-white">
+                    Đăng ký miễn phí
+                </a>
+                <a href="<?= $_SERVER['REQUEST_URI'] ?>" 
+                    class="btn btn-ghost-white">
+                    Tìm hiểu thêm
+                </a>
             </div>
         </div>
     </div>

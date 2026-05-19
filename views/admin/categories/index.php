@@ -45,7 +45,7 @@ $oldSlug        = $flashOld['slug'] ?? '';
                 'created' => 'Thêm danh mục thành công!',
                 'updated' => 'Cập nhật danh mục thành công!',
                 'deleted' => 'Xóa danh mục thành công!',
-                default => 'Thao tác thành công!'
+                'default' => 'Thao tác thành công!'
             };
         ?>
 
@@ -54,13 +54,20 @@ $oldSlug        = $flashOld['slug'] ?? '';
         </div>
     <?php endif; ?>
 
+    <?php if (isset($_GET['error']) && $_GET['error'] === 'has_posts'): ?>
+        <div class="alert-error">
+            Không thể xóa danh mục đang có bài viết!
+        </div>
+    <?php endif; ?>
+
 
     <!-- TOOLBAR -->
     <div class="admin-toolbar admin-toolbar-right">
 
         <input type="text"
-               class="admin-search"
-               placeholder="Tìm kiếm...">
+                class="admin-search"
+                id="categorySearch"
+                placeholder="Tìm kiếm danh mục...">
 
         <button class="admin-btn btn-add mt-2" onclick="openAddCategory()">
             + Thêm
@@ -84,11 +91,8 @@ $oldSlug        = $flashOld['slug'] ?? '';
         <tbody>
 
             <?php if (!empty($categories)): ?>
-
                 <?php foreach ($categories as $c): ?>
-
                     <tr>
-
                         <td><?= $c['categoryId'] ?></td>
 
                         <td>
@@ -104,9 +108,7 @@ $oldSlug        = $flashOld['slug'] ?? '';
                         </td>
 
                         <td>
-
                             <div class="admin-actions">
-
                                 <button class="action-btn btn-edit"
                                     data-id="<?= $c['categoryId'] ?>"
                                     data-name="<?= htmlspecialchars($c['categoryName'], ENT_QUOTES) ?>"
@@ -120,23 +122,18 @@ $oldSlug        = $flashOld['slug'] ?? '';
                                     onclick="openDeleteCategory(<?= $c['categoryId'] ?>)">
                                     🗑
                                 </button>
-
                             </div>
-
                         </td>
-
                     </tr>
 
                 <?php endforeach; ?>
 
             <?php else: ?>
-
                 <tr>
                     <td colspan="5" class="text-center">
                         Không có dữ liệu
                     </td>
                 </tr>
-
             <?php endif; ?>
 
         </tbody>
@@ -207,13 +204,10 @@ $oldSlug        = $flashOld['slug'] ?? '';
 <div class="modal fade" id="deleteModal">
 
     <div class="modal-dialog modal-dialog-centered">
-
         <div class="modal-content modal-box">
-
             <p class="delete-confirm-text">Bạn chắc chắn muốn xóa danh mục này?</p>
 
             <div class="text-center mt-3">
-
                 <a href="#"
                    id="deleteLink"
                    class="admin-btn btn-danger">
@@ -225,14 +219,46 @@ $oldSlug        = $flashOld['slug'] ?? '';
                         data-dismiss="modal">
                     Hủy
                 </button>
-
             </div>
-
         </div>
-
     </div>
-
 </div>
 
 
+
+<script>
+
+const searchInput = document.querySelector('.admin-search');
+const pagination  = document.querySelector('.tab-pagination-wrapper');
+
+let timeout = null;
+
+searchInput.addEventListener('input', function () {
+
+    clearTimeout(timeout);
+
+    timeout = setTimeout(() => {
+
+        const keyword = this.value.trim();
+
+        // ẨN pagination khi đang search
+        if (keyword !== '') {
+            pagination?.classList.add('d-none');
+        } else {
+            pagination?.classList.remove('d-none');
+        }
+
+        fetch(`/admin/categories/search?keyword=${encodeURIComponent(keyword)}`)
+            .then(res => res.text())
+            .then(html => {
+
+                document.querySelector('.admin-table tbody').innerHTML = html;
+
+            });
+
+    }, 300);
+
+});
+
+</script>
 

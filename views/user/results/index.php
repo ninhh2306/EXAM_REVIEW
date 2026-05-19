@@ -1,7 +1,8 @@
 <?php
-// ============================================================
-// views/results/index.php  – Updated UI
-// ============================================================
+/** @var array $grade */
+/** @var array $subject */
+/** @var array $exam */
+/** @var array $result */
 
 // ── 1. Tính thời gian làm bài ───────────────────────────────
 $timeTaken = '0:00';
@@ -29,21 +30,20 @@ $totalCorrect   = (int)($result['totalCorrect'] ?? 0);
 $totalQuestions = (int)($exam['totalQuestions'] ?? $result['totalQuestions'] ?? 0);
  
 // Tính lại điểm: số câu đúng / TỔNG SỐ CÂU ĐỀ THI (kể cả câu bỏ qua) × 10
-$score = $totalQuestions > 0
+$realScore = $totalQuestions > 0
     ? round(($totalCorrect / $totalQuestions) * 10, 1)
     : 0.0;
 
-
 // ── 3. Màu vòng tròn điểm ───────────────────────────────────
 $score = (float)($result['score'] ?? 0);
-if ($score >= 8)      $scoreClass = 'score--high';
-elseif ($score >= 5)  $scoreClass = 'score--mid';
+if ($realScore >= 8)     $scoreClass = 'score--high';
+elseif ($realScore >= 5)  $scoreClass = 'score--mid';
 else                  $scoreClass = 'score--low';
 
 // ── 4. SVG vòng tròn (r=45, circumference ≈ 282.74) ─────────
 $circumference = 282.74;
 // dashOffset = full - progress; bắt đầu từ full (ẩn), animate tới giá trị thật
-$targetOffset  = $circumference - ($circumference * ($score / 10));
+$targetOffset  = $circumference - ($circumference * ($realScore / 10));
 ?>
 
 <!-- BREADCRUMB -->
@@ -96,7 +96,7 @@ $targetOffset  = $circumference - ($circumference * ($score / 10));
                             transform="rotate(-90 50 50)"/>
                 </svg>
                 <div class="score-circle__inner">
-                    <span class="score-circle__number"><?= number_format($score, 1) ?></span>
+                    <span class="score-circle__number"><?= number_format($realScore, 1) ?></span>
                     <span class="score-circle__label">ĐIỂM SỐ</span>
                 </div>
             </div>

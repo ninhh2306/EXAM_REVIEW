@@ -1,6 +1,9 @@
 <?php
 session_start();
 
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
 // public/index.php
 define('ROOT', dirname(__DIR__));
 define('APP_URL', 'https://exam_review.test');
@@ -14,5 +17,6 @@ $router = new Router();
 // Nạp các route
 require_once ROOT . "/routes/web.php";
 require_once ROOT . "/routes/admin.php";
+
 
 $router->resolve();

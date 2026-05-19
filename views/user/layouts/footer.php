@@ -27,7 +27,7 @@
                 <a href="<?= $base ?>/lop-10">Luyện thi Lớp 10</a>
                 <a href="<?= $base ?>/lop-11">Luyện thi Lớp 11</a>
                 <a href="<?= $base ?>/lop-12">Luyện thi Lớp 12</a>
-                <a href="<?= $base ?>/subjects&grade_id=all">Luyện thi THPT Quốc Gia</a>
+                <a href="<?= $base ?>/thpt-quoc-gia">Luyện thi THPT Quốc Gia</a>
             </div>
 
             <div class="footer__col">
@@ -47,7 +47,7 @@
                 </div>
                 <div class="footer__contact-item">
                     <div class="footer__contact-icon">📞</div>
-                    <span>1900 123 456</span>
+                    <span>0984 155 625</span>
                 </div>
                 <div class="footer__contact-item">
                     <div class="footer__contact-icon">📍</div>

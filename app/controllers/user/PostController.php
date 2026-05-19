@@ -2,6 +2,7 @@
 
 require_once ROOT . "/app/models/Post.php";
 require_once ROOT . "/app/models/Category.php";
+require_once ROOT . "/app/models/User.php";
 
 class PostController extends Controller
 {
@@ -48,23 +49,24 @@ class PostController extends Controller
             die("Post not found");
         }
 
-        // kiểm tra đúng category slug
+        // kiểm tra category
         if ($post['categorySlug'] !== $categorySlug) {
             die("Category not match");
         }
 
-        // lấy bài viết liên quan
+        // bài viết liên quan
         $relatedPosts = $postModel->getRelated(
             $post['categoryId'],
             $post['postId'],
             4
         );
 
-        // author (nếu chưa có bảng users thì để tạm rỗng)
+        // AUTHOR
         $author = [
-            'fullName' => 'PrepMaster',
-            'avatar'   => null
+            'fullName' => $post['authorName'] ?? 'Admin',
+            'avatar'   => $post['authorAvatar'] ?? null
         ];
+
 
         $this->view("posts/detail", [
             "post"         => $post,
@@ -72,6 +74,4 @@ class PostController extends Controller
             "author"       => $author
         ]);
     }
-
-    
 }

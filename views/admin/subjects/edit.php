@@ -25,12 +25,13 @@
             <div class="alert-success" id="autoAlert">Cập nhật môn học thành công!</div>
         <?php endif; ?>
 
-        <?php if (isset($_GET['error']) && $_GET['error'] == 'exists'): ?>
+        <?php if (!empty($flashError)): ?>
             <div class="alert-error" id="autoAlert">
-                Tên hoặc slug môn học đã tồn tại trong khối lớp!
+                <?= htmlspecialchars($flashError) ?>
             </div>
         <?php endif; ?>
 
+        
         <form method="POST" action="/admin/subjects/update" enctype="multipart/form-data">
 
             <input type="hidden" name="id" value="<?= $subject['subjectId'] ?>">
@@ -43,11 +44,16 @@
                     <!-- KHỐI -->
                     <div class="form-group subject-field">
                         <label>Khối lớp</label>
+
                         <select name="gradeId" required>
                             <?php foreach ($grades as $g): ?>
-                                <option value="<?= $g['gradeId'] ?>"
-                                    <?= $g['gradeId'] == $subject['gradeId'] ? 'selected' : '' ?>>
-                                    <?= $g['gradeName'] ?>
+                                <option
+                                    value="<?= $g['gradeId'] ?>"
+                                    <?= ($g['gradeId'] == ($subject['gradeId'] ?? ''))
+                                        ? 'selected'
+                                        : '' ?>
+                                >
+                                    <?= htmlspecialchars($g['gradeName']) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
@@ -56,20 +62,22 @@
                     <!-- TÊN -->
                     <div class="form-group">
                         <label>Tên môn</label>
-                        <input type="text"
-                               name="name"
-                               id="name"
-                               value="<?= $subject['subjectName'] ?>"
-                               required>
+                        <input
+                            type="text"
+                            name="name"
+                            id="name"
+                            value="<?= htmlspecialchars($subject['subjectName'] ?? '') ?>"
+                            required
+                        >
                     </div>
 
                     <!-- SLUG -->
                     <div class="form-group">
                         <label>Slug</label>
                         <input type="text"
-                               name="slug"
-                               id="slug"
-                               value="<?= $subject['slug'] ?>">
+                                id="slug"
+                                name="slug"
+                                value="<?= htmlspecialchars($subject['slug'] ?? '') ?>">
                     </div>
 
                 </div>
@@ -119,13 +127,17 @@
             <!-- MÔ TẢ -->
             <div class="form-group full">
                 <label>Mô tả ngắn</label>
-                <textarea name="description" rows="2"><?= $subject['description'] ?></textarea>
+                <textarea name="description" rows="2" class="textarea-sm"><?=
+                htmlspecialchars($subject['description'] ?? '')
+                ?></textarea>
             </div>
 
             <!-- CHI TIẾT -->
             <div class="form-group full">
                 <label>Mô tả chi tiết</label>
-                <textarea name="detailDesc" rows="4"><?= $subject['detailDesc'] ?></textarea>
+                <textarea name="detailDesc" rows="4" class="textarea-lg"><?=
+                htmlspecialchars($subject['detailDesc'] ?? '')
+                ?></textarea>
             </div>
 
             <!-- ACTION -->

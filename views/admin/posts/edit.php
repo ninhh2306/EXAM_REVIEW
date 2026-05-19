@@ -1,6 +1,11 @@
 <?php
 /** @var array $categories */
 /** @var array $post */
+/** @var array $flashError */
+
+
+$d = $flashOld ?? [];
+
 ?>
 
 <div class="admin-page">
@@ -19,9 +24,18 @@
 
     <div class="card post-card-admin">
 
-        <?php if (isset($_GET['error']) && $_GET['error'] == 'exists'): ?>
+        <?php
+        $errorMessages = [
+            'empty_fields' => 'Vui lòng nhập đầy đủ thông tin!',
+            'exists'       => 'Tiêu đề hoặc slug bài viết đã tồn tại!',
+        ];
+
+        $errorText = $errorMessages[$flashError] ?? $flashError;
+        ?>
+
+        <?php if (!empty($flashError)): ?>
             <div class="alert-error" id="autoAlert">
-                Tiêu đề hoặc slug đã tồn tại!
+                <?= $errorText ?>
             </div>
         <?php endif; ?>
 
@@ -42,14 +56,15 @@
                         <label>Danh mục tin tức</label>
 
                         <select name="categoryId" required>
-
                             <?php foreach($categories as $c): ?>
                                 <option value="<?= $c['categoryId'] ?>"
-                                    <?= $post['categoryId'] == $c['categoryId'] ? 'selected' : '' ?>>
-                                    <?= $c['categoryName'] ?>
+                                    <?= (($d['categoryId'] ?? $post['categoryId']) == $c['categoryId'])
+                                        ? 'selected'
+                                        : '' ?>>
+
+                                    <?= htmlspecialchars($c['categoryName']) ?>
                                 </option>
                             <?php endforeach; ?>
-
                         </select>
                     </div>
 
@@ -59,7 +74,7 @@
                         <input type="text"
                                name="title"
                                id="post_title"
-                               value="<?= htmlspecialchars($post['title']) ?>"
+                               value="<?= htmlspecialchars($d['title'] ?? $post['title']) ?>"
                                required>
                     </div>
 
@@ -69,8 +84,24 @@
                         <input type="text"
                                name="slug"
                                id="post_slug"
-                               value="<?= htmlspecialchars($post['slug']) ?>"
-                               required>
+                               value="<?= htmlspecialchars($d['slug'] ?? $post['slug']) ?>">
+                    </div>
+
+                    <div class="post-field lesson-status">
+
+                        <label>Trạng thái</label>
+
+                        <label class="switch">
+
+                            <input type="checkbox"
+                                name="isActive"
+                                value="1"
+                                <?= ($flashOld['isActive'] ?? $post['isActive']) ? 'checked' : '' ?>>
+
+                            <span class="slider round"></span>
+
+                        </label>
+
                     </div>
 
                 </div>
@@ -130,7 +161,8 @@
                 <label>Nội dung bài viết</label>
 
                 <textarea name="content"
-                          id="postEditor"><?= htmlspecialchars($post['content']) ?></textarea>
+                          id="postEditor"><?= htmlspecialchars($d['content'] ?? $post['content']) ?>
+                </textarea>
 
             </div>
 
@@ -210,5 +242,13 @@ if (input && preview) {
     });
 
 }
+
+
+document.querySelector('form').addEventListener('submit', () => {
+    if (window.editorInstance) {
+        document.querySelector('#postEditor').value =
+            window.editorInstance.getData();
+    }
+});
 
 </script>

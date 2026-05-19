@@ -52,16 +52,54 @@ class ChapterController extends Controller
 
     public function store()
     {
-        if (session_status() === PHP_SESSION_NONE) session_start();
-
-        $id        = $_POST['id']        ?? null;
-        $name      = trim($_POST['name'] ?? '');
-        $subjectId = (int)($_POST['subjectId'] ?? 0);
-        $gradeId   = (int)($_POST['gradeId']   ?? 0);
-        $sortOrder = (int)($_POST['sortOrder']  ?? 0);
-        $slug      = 'chuong-' . $sortOrder;
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
 
         $model = new Chapter();
+        $id        = !empty($_POST['id']) ? (int)$_POST['id'] : null;
+        $name      = trim($_POST['name'] ?? '');
+        $subjectId = (int)($_POST['subjectId'] ?? 0);
+        $gradeId   = (int)($_POST['gradeId'] ?? 0);
+        $positionValue = $_POST['positionValue'] ?? 'last';
+
+        // =========================
+        // SORT ORDER
+        // =========================
+
+        $sortOrder = 1;
+
+        if ($positionValue === 'last') {
+
+            $sortOrder =
+                $model->getMaxSortOrder($subjectId) + 1;
+        }
+
+        elseif ($positionValue === 'first') {
+            $sortOrder = 1;
+            $model->increaseSortOrders($subjectId, 1, $id);
+        }
+
+        elseif (str_starts_with($positionValue, 'after-')) {
+
+            $afterChapterId = (int)str_replace('after-', '', $positionValue);
+
+            $afterSort = $model->getSortOrder($afterChapterId, $subjectId);
+
+            $sortOrder = $afterSort + 1;
+
+            // Truyền $id để loại trừ chính nó
+            $model->increaseSortOrders($subjectId, $sortOrder, $id);
+        }
+
+
+        // ====== SLUG ========
+        $slug = $model->toSlug($name);
+
+
+        // =========================
+        // FLASH OLD
+        // =========================
 
         $oldData = [
             'id'        => $id,
@@ -72,37 +110,172 @@ class ChapterController extends Controller
             'slug'      => $slug,
         ];
 
-        // CHECK TRÙNG SORT ORDER
-        if ($model->existsSortOrder($subjectId, $sortOrder, $id ?: null)) {
-            $_SESSION['flash_error'] = 'sort_exists';
-            $_SESSION['flash_old']   = $oldData;
+        $_SESSION['flash_old'] = $oldData;
+
+        // =========================
+        // VALIDATE
+        // =========================
+
+        if (
+            empty($name)
+            || !$subjectId
+            || !$gradeId
+        ) {
+
+            $_SESSION['flash_error'] = 'empty';
+
             header("Location: /admin/chapters");
             exit;
         }
 
-        // CHECK TRÙNG TÊN / SLUG
-        if (!$id && $model->exists($name, $slug, $subjectId)) {
-            $_SESSION['flash_error'] = 'exists';
-            $_SESSION['flash_old']   = $oldData;
+        // CHECK NAME
+
+        if ($model->existsName($name, $subjectId, $id)) {
+
+            $_SESSION['flash_error'] = 'name_exists';
+
             header("Location: /admin/chapters");
             exit;
         }
+
+
+        // =========================
+        // UPDATE
+        // =========================
 
         if ($id) {
-            $model->update($id, $name, $slug, $subjectId, $sortOrder);
+
+            $oldChapter = $model->getById($id);
+
+            $oldSubjectId = (int)$oldChapter['subjectId'];
+            $oldSortOrder = (int)$oldChapter['sortOrder'];
+
+            // =====================================
+            // CÙNG SUBJECT
+            // =====================================
+
+            if ($oldSubjectId == $subjectId) {
+
+                // Tạm thời đưa chapter ra khỏi danh sách
+                $model->update($id, $name, $slug, $subjectId, 0);
+
+                // Dồn các chapter phía sau lên
+                $model->decreaseSortOrders(
+                    $subjectId,
+                    $oldSortOrder
+                );
+
+                // Chèn vào vị trí mới
+                if ($positionValue === 'first') {
+
+                    $sortOrder = 1;
+
+                    $model->increaseSortOrders(
+                        $subjectId,
+                        1
+                    );
+                }
+
+                elseif (str_starts_with($positionValue, 'after-')) {
+
+                    $afterChapterId = (int)str_replace(
+                        'after-',
+                        '',
+                        $positionValue
+                    );
+
+                    $afterSort = $model->getSortOrder(
+                        $afterChapterId,
+                        $subjectId
+                    );
+
+                    $sortOrder = $afterSort + 1;
+
+                    $model->increaseSortOrders(
+                        $subjectId,
+                        $sortOrder
+                    );
+                }
+
+                else {
+
+                    $sortOrder =
+                        $model->getMaxSortOrder($subjectId) + 1;
+                }
+            }
+
+            // =====================================
+            // ĐỔI SUBJECT
+            // =====================================
+
+            else {
+
+                // Xóa vị trí cũ
+                $model->decreaseSortOrders(
+                    $oldSubjectId,
+                    $oldSortOrder
+                );
+
+                $model->reorderSortOrders($oldSubjectId);
+
+                // Thêm cuối subject mới
+                $sortOrder =
+                    $model->getMaxSortOrder($subjectId) + 1;
+            }
+
+            $model->update(
+                $id,
+                $name,
+                $slug,
+                $subjectId,
+                $sortOrder
+            );
+
+            $model->reorderSortOrders($subjectId);
+
             header("Location: /admin/chapters?success=updated");
-        } else {
+        }
+
+
+
+        // =========================
+        // CREATE
+        // =========================
+
+        else {
             $model->create($name, $slug, $subjectId, $sortOrder);
+            $model->reorderSortOrders($subjectId);
+
             header("Location: /admin/chapters?success=created");
         }
+
         exit;
     }
 
     public function delete($id)
     {
-        $id = $_GET['id'];
         $chapterModel = new Chapter();
-        $chapterModel->delete($id);
+        $chapter = $chapterModel->getById($id);
+
+        if ($chapter) {
+
+            if ($chapterModel->hasLessons($id)) {
+                header("Location: /admin/chapters?error=has_lessons");
+                exit;
+            }
+
+            $chapterModel->decreaseSortOrders(
+                $chapter['subjectId'],
+                $chapter['sortOrder']
+            );
+
+            $chapterModel->delete($id);
+            $chapterModel->reorderSortOrders($chapter['subjectId']);
+        }
+
         header("Location: /admin/chapters?success=deleted");
+        exit;
     }
+
+    
 }

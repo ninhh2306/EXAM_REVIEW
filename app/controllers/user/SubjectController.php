@@ -13,18 +13,14 @@ class SubjectController extends Controller
         $subjectModel = new Subject();
         $gradeModel   = new Grade();
 
-        // 🔥 LẤY GRADE
         $grade = $gradeModel->getBySlug($gradeSlug);
 
-        // ❗ CHẶN NULL
         if (!$grade) {
             return $this->view('errors/404');
         }
 
-        // 🔥 LẤY SUBJECT THEO gradeId
         $subjects = $subjectModel->getByGrade($grade['gradeId']);
 
-        // 🔥 TRUYỀN QUA VIEW
         return $this->view('subjects/list', [
             'grade' => $grade,
             'subjects' => $subjects
@@ -53,7 +49,7 @@ class SubjectController extends Controller
         }
 
         $lessons = $lessonModel->getBySubject($subject['subjectId']);
-        $exams   = $examModel->getBySubject($subject['subjectId']);
+        $exams = $examModel->getBySubject($subject['subjectId']);
 
         return $this->view("subjects/detail", [
             "subject" => $subject,

@@ -18,9 +18,27 @@ class Controller
 
         
         // Chỉ set nếu chưa có — tránh ghi đè data từ controller con
-        if (!isset($data['grades']))     $data['grades']     = $gradeModel->getAllAsc();
-        if (!isset($data['subjects']))   $data['subjects']   = $subjectModel->getAll();
-        if (!isset($data['categories'])) $data['categories'] = $categoryModel->getAll();
+        if (!isset($data['grades'])) {
+            $data['grades'] = $gradeModel->getAllAsc();
+        }
+
+        // subjects thường
+        if (!isset($data['subjects'])) {
+            $data['subjects'] = $subjectModel->getAll();
+        }
+
+        // subjects riêng cho THPT
+        if (!isset($data['thptSubjects'])) {
+           $grade12 = $gradeModel->getBySlug('lop-12');
+            $data['thptSubjects'] = $grade12
+                ? $subjectModel->getByGrade($grade12['gradeId'])
+                : [];
+        }
+
+        if (!isset($data['categories'])) {
+            $data['categories'] =
+                $categoryModel->getAll();
+        }
 
         extract($data);
 

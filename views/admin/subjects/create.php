@@ -24,9 +24,9 @@
             <div class="alert-success" id="autoAlert">Thêm môn học thành công!</div>
         <?php endif; ?>
 
-        <?php if (isset($_GET['error']) && $_GET['error'] == 'exists'): ?>
+        <?php if (!empty($flashError)): ?>
             <div class="alert-error" id="autoAlert">
-                Tên hoặc slug môn học đã tồn tại trong khối lớp!
+                <?= htmlspecialchars($flashError) ?>
             </div>
         <?php endif; ?>
 
@@ -42,7 +42,10 @@
                         <select name="gradeId" required>
                             <option value="">Chọn khối lớp</option>
                             <?php foreach ($grades as $g): ?>
-                                <option value="<?= $g['gradeId'] ?>">
+                                <option value="<?= $g['gradeId'] ?>"
+                                <?= ($flashOld['gradeId'] ?? '') == $g['gradeId']
+                                    ? 'selected'
+                                    : '' ?>>
                                     <?= $g['gradeName'] ?>
                                 </option>
                             <?php endforeach; ?>
@@ -51,12 +54,18 @@
 
                     <div class="form-group">
                         <label>Tên môn</label>
-                        <input type="text" id="name" name="name">
+                        <input type="text"
+                                id="name"
+                                name="name"
+                                value="<?= htmlspecialchars($flashOld['name'] ?? '') ?>">
                     </div>
 
                     <div class="form-group">
                         <label>Slug</label>
-                        <input type="text" id="slug" name="slug">
+                        <input type="text"
+                                id="slug"
+                                name="slug"
+                                value="<?= htmlspecialchars($flashOld['slug'] ?? '') ?>">
                     </div>
 
                 </div>
@@ -96,12 +105,16 @@
             <!-- DESCRIPTION -->
             <div class="form-group full">
                 <label>Mô tả nhanh</label>
-                <textarea name="description" rows="1" class="textarea-sm"></textarea>
+                <textarea name="description" rows="2" class="textarea-sm"><?=
+                htmlspecialchars($flashOld['description'] ?? '')
+                ?></textarea>
             </div>
 
             <div class="form-group full">
                 <label>Mô tả chi tiết</label>
-                <textarea name="detailDesc" rows="4" class="textarea-lg"></textarea>
+                <textarea name="detailDesc" rows="4" class="textarea-lg"><?=
+                htmlspecialchars($flashOld['detailDesc'] ?? '')
+                ?></textarea>
             </div>
 
             <!-- ACTION -->

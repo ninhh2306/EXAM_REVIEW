@@ -5,7 +5,7 @@ require_once ROOT . "/app/core/Model.php";
 class Grade extends Model
 {
 
-    // ===== USER =====
+    // ================= USER ==================
 
     public function getAllAsc()
     {
@@ -44,13 +44,11 @@ class Grade extends Model
     }
 
 
-
-
-    // ===== ADMIN =====
+    // =============== ADMIN ==================
 
     public function getAll()
     {
-        $sql = "SELECT * FROM grades ORDER BY gradeId DESC";
+        $sql = "SELECT * FROM grades ORDER BY gradeId ASC";
         return $this->fetchAll($sql);
         
     }
@@ -67,7 +65,7 @@ class Grade extends Model
         return $this->execute($sql, [$name, $slug]);
     }
 
-    // ✅ update cả gradeName lẫn slug
+    // update cả gradeName lẫn slug
     public function update($id, $name, $slug)
     {
         $sql = "UPDATE grades SET gradeName = ?, slug = ? WHERE gradeId = ?";
@@ -80,24 +78,87 @@ class Grade extends Model
         return $this->execute($sql, [$id]);
     }
 
-    // ✅ CHECK TRÙNG khi CREATE — check cả name lẫn slug (không phân biệt hoa/thường)
-    public function existsFull($name, $slug)
+    public function hasSubjects($gradeId)
     {
-        $sql = "SELECT 1 FROM grades 
-                WHERE LOWER(gradeName) = LOWER(?) OR LOWER(slug) = LOWER(?)
-                LIMIT 1";
-
-        return !empty($this->fetch($sql, [$name, $slug]));
+        $sql = "SELECT 1 FROM subjects WHERE gradeId = ? LIMIT 1";
+        return !empty($this->fetch($sql, [$gradeId]));
     }
 
-    // ✅ CHECK TRÙNG khi UPDATE — check cả name lẫn slug, loại trừ chính nó
-    public function existsFullExcept($name, $slug, $id)
+    public function hasExams($gradeId)
     {
-        $sql = "SELECT 1 FROM grades 
-                WHERE (LOWER(gradeName) = LOWER(?) OR LOWER(slug) = LOWER(?))
+        $sql = "SELECT 1 FROM exams WHERE gradeId = ? LIMIT 1";
+        return !empty($this->fetch($sql, [$gradeId]));
+    }
+
+    public function existsName($name)
+    {
+        $sql = "SELECT 1 FROM grades
+                WHERE LOWER(gradeName) = LOWER(?)
+                LIMIT 1";
+
+        return !empty($this->fetch($sql, [$name]));
+    }
+
+    public function existsSlug($slug)
+    {
+        $sql = "SELECT 1 FROM grades
+                WHERE LOWER(slug) = LOWER(?)
+                LIMIT 1";
+
+        return !empty($this->fetch($sql, [$slug]));
+    }
+
+
+    public function existsNameExcept($name, $id)
+    {
+        $sql = "SELECT 1 FROM grades
+                WHERE LOWER(gradeName) = LOWER(?)
                 AND gradeId != ?
                 LIMIT 1";
 
-        return !empty($this->fetch($sql, [$name, $slug, $id]));
+        return !empty($this->fetch($sql, [$name, $id]));
     }
+
+
+    public function existsSlugExcept($slug, $id)
+    {
+        $sql = "SELECT 1 FROM grades
+                WHERE LOWER(slug) = LOWER(?)
+                AND gradeId != ?
+                LIMIT 1";
+
+        return !empty($this->fetch($sql, [$slug, $id]));
+    }
+
+
+    public function search($keyword)
+    {
+        $sql = "
+            SELECT *
+            FROM grades
+            WHERE
+                gradeName LIKE ?
+                OR slug LIKE ?
+            ORDER BY gradeId DESC
+        ";
+
+        return $this->fetchAll($sql, [
+            "%{$keyword}%",
+            "%{$keyword}%"
+        ]);
+    }
+
+
+    public function all()
+    {
+        $sql = "
+            SELECT *
+            FROM grades
+            ORDER BY gradeId ASC
+        ";
+
+        return $this->fetchAll($sql);
+    }
+
+
 }

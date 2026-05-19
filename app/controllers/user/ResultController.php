@@ -1,13 +1,13 @@
 <?php
 
+require_once ROOT . '/app/core/Controller.php';
+
+require_once ROOT . '/app/models/Exam.php';
 require_once ROOT . '/app/models/Question.php';
-require_once "../app/core/Controller.php";
-require_once "../app/models/Exam.php";
-require_once "../app/models/Question.php";
-require_once "../app/models/Subject.php";
-require_once "../app/models/Grade.php";
-require_once "../app/models/Result.php";
-require_once "../app/models/ResultDetail.php";
+require_once ROOT . '/app/models/Subject.php';
+require_once ROOT . '/app/models/Grade.php';
+require_once ROOT . '/app/models/Result.php';
+require_once ROOT . '/app/models/ResultDetail.php';
 
 class ResultController extends Controller
 {
@@ -30,12 +30,13 @@ class ResultController extends Controller
 
         // 2. Lấy đề thi từ result
         $exam = $examModel->getById($result['examId']);
-        if (!$exam) {
-            $this->view('errors/404'); 
+
+        if (!$exam || !$exam['isActive']) {
+            $this->view('errors/404');
             return;
         }
 
-        // ✅ CHECK slug đúng không (best practice)
+        // CHECK slug đúng không (best practice)
         if ($exam['slug'] !== $slug) {
             header("Location: /ket-qua/{$exam['slug']}-{$resultId}");
             exit;
@@ -92,9 +93,15 @@ class ResultController extends Controller
 
         // 2. Lấy đề thi
         $exam = $examModel->getById($result['examId']);
+        
+        if (!$exam || !$exam['isActive']) {
+            $this->view('errors/404');
+            return;
+        }
 
         // 3. Lấy toàn bộ câu hỏi + đáp án
         $questions = $questionModel->getByExamWithAnswers($result['examId']);
+        $exam['realTotalQuestions'] = count($questions);
 
         // 4. Lấy chi tiết bài làm
         $details = $resultDetailModel->getByResult($resultId);
@@ -189,6 +196,15 @@ class ResultController extends Controller
         $subjects = $resultModel->getSubjectsHistory($userId);
 
         $summary = $resultModel->getSummary($userId);
+
+        // SEARCH
+        if (isset($_GET['ajax'])) {
+
+            header('Content-Type: application/json');
+
+            echo json_encode($histories);
+            return;
+        }
 
         $this->view('results/history', compact(
             'histories',

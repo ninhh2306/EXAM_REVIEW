@@ -1,11 +1,26 @@
 <?php
+$isAdmin = $isAdmin ?? false;
+?>
+
+<?php
+/** @var string $base */
+
 /** @var array $exam */
 /** @var array $questions */
-/** @var array $correctKnowledge */
-/** @var array $totalKnowledge */
-/** @var array $correctComprehension */
 
-?> 
+/** @var array $userAnswers */
+/** @var array $correctAnswers */
+
+/** @var int $correctKnowledge */
+/** @var int $totalKnowledge */
+
+/** @var int $correctComprehension */
+/** @var int $totalComprehension */
+
+/** @var int $correctApplication */
+/** @var int $totalApplication */
+?>
+
 
 <?php
 /* ── Tính toán thống kê ─────────────────────────────────── */
@@ -48,6 +63,8 @@ if ($percent < 50) {
 ?>
 
 
+<?php if (!$isAdmin): ?>
+
 <section class="exam-hero-section">
     <div class="container">
 
@@ -63,6 +80,25 @@ if ($percent < 50) {
 
     </div>
 </section>
+
+<?php endif; ?>
+
+
+<?php if ($isAdmin): ?>
+
+<section class="admin-result-title-wrap">
+
+    <div class="container">
+
+        <h1 class="admin-result-title">
+            <?= htmlspecialchars($exam['title']) ?>
+        </h1>
+
+    </div>
+
+</section>
+
+<?php endif; ?>
 
 
 <section class="exam-section">

@@ -80,7 +80,7 @@ $shortTitle = mb_strimwidth($post['title'], 0, 50, '...');
                     <div class="author-post__info">
 
                         <span class="author-post__name">
-                            <?= htmlspecialchars($author['fullName'] ?? 'PrepMaster') ?>
+                            <?= htmlspecialchars($author['fullName'] ?? 'Admin') ?>
                         </span>
 
                         <span class="author-post__date">
@@ -127,19 +127,16 @@ $shortTitle = mb_strimwidth($post['title'], 0, 50, '...');
                                 <a href="/tin-tuc/<?= htmlspecialchars($rp['categorySlug']) ?>/<?= htmlspecialchars($rp['slug']) ?>"
                                    class="related-post__item">
 
-                                    <?php if (!empty($rp['thumbnail'])): ?>
+                                    <?php
+                                        $thumb = !empty($rp['thumbnail'])
+                                            ? $rp['thumbnail']
+                                            : '/images/default-post.jpg';
+                                        ?>
 
-                                        <img src="<?= htmlspecialchars($rp['thumbnail']) ?>"
-                                             alt="<?= htmlspecialchars($rp['title']) ?>"
-                                             class="related-post__thumb">
+                                        <img src="<?= htmlspecialchars($thumb) ?>"
+                                            alt="<?= htmlspecialchars($rp['title']) ?>"
+                                            class="related-post__thumb">
 
-                                    <?php else: ?>
-
-                                        <div class="related-post__thumb related-post__thumb--empty">
-                                            🖼️
-                                        </div>
-
-                                    <?php endif; ?>
 
                                     <div class="related-post__info">
 

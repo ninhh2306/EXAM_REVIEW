@@ -75,16 +75,31 @@ $base = "";
 
             <h2 class="right-headline">Bắt đầu hành trình của bạn</h2>
 
+            <?php if (!empty($error)): ?>
+                <div class="alert-error">
+                    <?= htmlspecialchars($error) ?>
+                </div>
+            <?php endif; ?>
+
             <form method="POST" action="/register" autocomplete="off">
 
                 <div class="form-group">
                     <label>Họ tên</label>
-                    <input type="text" name="name" placeholder="Nguyễn Văn A" required>
+                    <input type="text"
+                            name="name"
+                            placeholder="Nguyễn Văn A"
+                            value="<?= htmlspecialchars($old['name'] ?? '') ?>"
+                            required>
                 </div>
 
                 <div class="form-group">
                     <label>Email</label>
-                    <input type="email" name="email" placeholder="example@gmail.com" autocomplete="new-password" required>
+                    <input type="email"
+                            name="email"
+                            placeholder="example@gmail.com"
+                            autocomplete="new-password"
+                            value="<?= htmlspecialchars($old['email'] ?? '') ?>"
+                            required>
                 </div>
 
                 <div class="form-group">
@@ -102,7 +117,10 @@ $base = "";
                     <label>Xác nhận</label>
 
                     <div class="password-wrapper">
-                        <input type="password" id="confirm_password" name="confirm_password">
+                        <input type="password"
+                                id="confirm_password"
+                                name="confirm_password"
+                                required>
 
                         <i class="fa-solid fa-eye-slash toggle-password"
                         onclick="togglePassword('confirm_password', this)"></i>
@@ -156,6 +174,23 @@ function togglePassword(inputId, icon) {
         icon.classList.remove("active");
     }
 }
+
+
+
+const alertBox = document.querySelector('.alert-error');
+
+if (alertBox) {
+    setTimeout(() => {
+        alertBox.style.opacity = '0';
+        alertBox.style.transition = '0.3s';
+
+        setTimeout(() => {
+            alertBox.remove();
+        }, 300);
+
+    }, 4000);
+}
+
 
 </script>
 

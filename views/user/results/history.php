@@ -1,4 +1,13 @@
-<?php require_once "../views/user/layouts/header.php"; ?>
+<?php
+/** @var string $base */
+
+/** @var array $summary */
+/** @var array $subjects */
+/** @var array $histories */
+
+/** @var string|int $subjectId */
+/** @var string $keyword */
+?>
 
 
 <!-- =========================
@@ -69,16 +78,20 @@ HISTORY HERO
 
     <div class="filter-left">
 
-        <a href="<?= $base ?>/lich-su-lam-bai"
+        <a href="<?= $base ?>/history"
            class="history-pill <?= $subjectId=='' ? 'active':'' ?>">
            Tất cả
         </a>
 
         <?php foreach($subjects as $sub): ?>
 
-        <a href="<?= $base ?>/lich-su-lam-bai?subjectId=<?= $sub['subjectId'] ?>"
+        <a href="<?= $base ?>/history?subjectId=<?= $sub['subjectId'] ?>"
            class="history-pill <?= $subjectId==$sub['subjectId'] ? 'active':'' ?>">
-           <?= $sub['subjectName'] ?>
+           <?php if($sub['subjectId'] === 'thpt'): ?>
+                THPT Quốc Gia
+            <?php else: ?>
+                <?= $sub['subjectName'] ?> - <?= $sub['gradeName'] ?>
+            <?php endif; ?>
         </a>
 
         <?php endforeach; ?>
@@ -88,13 +101,13 @@ HISTORY HERO
 
     <div class="filter-right">
 
-        <form method="GET">
+        <div class="history-search-wrap">
             <input type="text"
-                   name="keyword"
-                   value="<?= $keyword ?>"
-                   placeholder="Tìm kiếm bài..."
-                   class="history-search">
-        </form>
+                id="historySearch"
+                value="<?= $keyword ?>"
+                placeholder="Tìm kiếm bài..."
+                class="history-search">
+        </div>
 
     </div>
 
@@ -106,10 +119,10 @@ HISTORY HERO
 <!-- LIST -->
 <section class="history-list-section">
 
-    <div class="container">
+    <div class="container" id="historyList">
 
     <?php foreach($histories as $item): ?>
-
+        
     <?php
 
     /* TÍNH THỜI GIAN */
@@ -131,10 +144,15 @@ HISTORY HERO
     if($item['subjectName'] == 'Địa lý') $icon = '🌍';
     if($item['subjectName'] == 'Giáo dục công dân')   $icon = '⚖️';
     if($item['subjectName'] == 'Tiếng Anh')   $icon = '📖';
-
+    if($item['subjectName'] == 'Toán') $icon = 'Σ';
+    if($item['subjectName'] == 'Vật lý') $icon = '⚡';
+    if($item['subjectName'] == 'Hóa học')   $icon = '🧪';
+    if($item['subjectName'] == 'Sinh học')   $icon = '🧬';
 
     /* MÀU ĐIỂM */
-    $score = (float)$item['score'];
+    $score = $item['realTotalQuestions'] > 0
+        ? round(($item['totalCorrect'] / $item['realTotalQuestions']) * 10, 1)
+        : 0;
 
     $scoreClass = 'good';
 
@@ -178,7 +196,7 @@ HISTORY HERO
                     <!-- Icon Check cho Số câu đúng -->
                     <span>
                         <i class="fa-regular fa-circle-check icon-check"></i> 
-                        <?= $item['totalCorrect'] ?>/<?= $item['totalQuestions'] ?> câu đúng
+                        <?= $item['totalCorrect'] ?>/<?= $item['realTotalQuestions'] ?> câu đúng
                     </span>
                     
                 </div>
@@ -197,7 +215,7 @@ HISTORY HERO
 
                 <div class="history-score">
                     <span class="score-main <?= $scoreClass ?>">
-                        <?= number_format($item['score'],1) ?>
+                        <?= number_format($score,1) ?>
                     </span>
 
                     <span class="score-total">
@@ -223,8 +241,151 @@ HISTORY HERO
 
 <?php endforeach; ?>
 
+<?php if(empty($histories)): ?>
+
+<div class="history-empty">
+    Không có kết quả phù hợp
+</div>
+
+<?php endif; ?>
+
 </div>
 </section>
 
 
-<?php require_once "../views/user/layouts/footer.php"; ?>
+<script>
+
+const historySearch = document.getElementById('historySearch');
+const historyList   = document.getElementById('historyList');
+
+let debounce;
+
+if (historySearch) {
+
+    historySearch.addEventListener('input', function () {
+
+        clearTimeout(debounce);
+
+        debounce = setTimeout(async () => {
+
+            const keyword = this.value.trim();
+
+            const response = await fetch(
+                `<?= $base ?>/history?ajax=1&keyword=` +
+                encodeURIComponent(keyword)
+            );
+
+            const data = await response.json();
+
+            let html = '';
+
+            // EMPTY
+            if (!data.length) {
+                html = `
+                    <div class="history-empty">
+                        Không có kết quả phù hợp
+                    </div>
+                `;
+
+                historyList.innerHTML = html;
+                return;
+            }
+
+            data.forEach(item => {
+
+                let icon = '📘';
+
+                if(item.subjectName === 'Lịch sử') icon = '⏳';
+                if(item.subjectName === 'Địa lý') icon = '🌍';
+                if(item.subjectName === 'Giáo dục công dân') icon = '⚖️';
+                if(item.subjectName === 'Tiếng Anh') icon = '📖';
+                if(item.subjectName === 'Toán') icon = 'Σ';
+                if(item.subjectName === 'Vật lý') icon = '⚡';
+                if(item.subjectName === 'Hóa học') icon = '🧪';
+                if(item.subjectName === 'Sinh học') icon = '🧬';
+
+                let scoreClass = 'good';
+
+                if(parseFloat(item.score) < 5){
+                    scoreClass = 'bad';
+                }
+                else if(parseFloat(item.score) < 8){
+                    scoreClass = 'mid';
+                }
+
+                html += `
+                <div class="history-card-row">
+                    <div class="history-card-left">
+                        <div class="subject-card__icon">${icon}</div>
+
+                        <div class="history-info">
+                            <span class="subject-badge-mini">
+                                ${item.subjectName}
+                            </span>
+
+                            <h3>${item.examTitle}</h3>
+
+                            <div class="history-meta">
+                                <span>
+                                    <i class="fa-regular fa-calendar-days icon-date"></i>
+                                    ${formatDate(item.endTime)}
+                                </span>
+
+                                <span>
+                                    <i class="fa-regular fa-circle-check icon-check"></i>
+                                    ${item.totalCorrect}/${item.realTotalQuestions} câu đúng
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="history-card-right">
+
+                        <div class="result-col">
+                            <span class="result-label">
+                                KẾT QUẢ
+                            </span>
+
+                            <div class="history-score">
+                                <span class="score-main ${scoreClass}">
+                                    ${
+                                        item.realTotalQuestions > 0
+                                            ? ((item.totalCorrect / item.realTotalQuestions) * 10).toFixed(1)
+                                            : '0.0'
+                                    }
+                                </span>
+
+                                <span class="score-total">
+                                    /10
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="button-col">
+                            <a href="<?= $base ?>/ket-qua/${item.examSlug}-${item.resultId}/chi-tiet"
+                               class="history-detail-btn">
+                               Xem chi tiết
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                `;
+            });
+
+            historyList.innerHTML = html;
+
+        }, 300);
+
+    });
+
+}
+
+
+function formatDate(dateString) {
+
+    const d = new Date(dateString);
+
+    return d.toLocaleDateString('vi-VN');
+}
+
+</script>

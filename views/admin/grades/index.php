@@ -46,9 +46,25 @@ $oldSlug   = $flashOld['slug'] ?? '';
         <div class="alert-success" id="autoAlert"><?= $msg ?></div>
     <?php endif; ?>
 
+    <?php if (isset($_GET['error'])): ?>
+        <?php
+            $gradeErrors = [
+                'has_subjects' => 'Không thể xóa khối lớp đang có môn học!',
+                'has_exams'    => 'Không thể xóa khối lớp đang có đề thi!',
+            ];
+        ?>
+        <div class="alert-error">
+            <?= $gradeErrors[$_GET['error']] ?? 'Không thể xóa!' ?>
+        </div>
+    <?php endif; ?>
+
     <!-- TOOLBAR -->
     <div class="admin-toolbar admin-toolbar-right">
-        <input type="text" class="admin-search" placeholder="Tìm kiếm...">
+
+        <input type="text"
+            class="admin-search"
+            id="gradeSearch"
+            placeholder="Tìm kiếm khối lớp...">
 
         <!-- onclick thay vì data-toggle để kiểm soát qua JS -->
         <button class="admin-btn btn-add mt-2" onclick="openAddGrade()">
@@ -66,7 +82,7 @@ $oldSlug   = $flashOld['slug'] ?? '';
                 <th>Hành động</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="gradeTableBody">
             <?php if (!empty($grades)): ?>
                 <?php foreach ($grades as $g): ?>
                 <tr>
@@ -105,7 +121,7 @@ $oldSlug   = $flashOld['slug'] ?? '';
     <!-- TAB PAGINATION -->
     <?php if ($tabCount > 1): ?>
     <?php $baseUrl = '/admin/grades'; ?>
-    <div class="tab-pagination-wrapper">
+    <div class="tab-pagination-wrapper" id="gradePagination">
         <div class="tab-pagination">
             <?php for ($i = 1; $i <= $tabCount; $i++): ?>
                 <?php
@@ -132,14 +148,11 @@ $oldSlug   = $flashOld['slug'] ?? '';
 
             <!-- form luôn rỗng, JS tự điền khi cần -->
             <form method="POST" action="/admin/grades/store">
-
                 <input type="hidden" name="id" id="id" value="">
 
                 <h4 id="gradeModalTitle" class="text-center mb-3">
                     Thêm khối lớp
                 </h4>
-
-                <!-- alert-error sẽ được JS inject vào đây khi có lỗi -->
 
                 <label>Tên khối lớp</label>
                 <input type="text" name="name" id="name" required value="">

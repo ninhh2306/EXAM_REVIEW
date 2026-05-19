@@ -62,17 +62,15 @@ if (!empty($_SESSION['user_id'])) {
                     Sẵn sàng bứt phá và chinh phục những mục tiêu mới
                 </p>
     
-                <?php if (!empty($_SESSION['error'])): ?>
-                    <div class="error">
-                        <?= htmlspecialchars($_SESSION['error']) ?>
-                        <?php unset($_SESSION['error']); ?>
+                <?php if (!empty($success)): ?>
+                    <div class="alert-success">
+                        <?= htmlspecialchars($success) ?>
                     </div>
                 <?php endif; ?>
-    
-                <?php if (!empty($_SESSION['success'])): ?>
-                    <div class="success-msg">
-                        <?= htmlspecialchars($_SESSION['success']) ?>
-                        <?php unset($_SESSION['success']); ?>
+
+                <?php if (!empty($error)): ?>
+                    <div class="alert-error">
+                        <?= htmlspecialchars($error) ?>
                     </div>
                 <?php endif; ?>
     
@@ -106,7 +104,11 @@ if (!empty($_SESSION['user_id'])) {
                         <label>
                             <input type="checkbox" name="remember"> Ghi nhớ đăng nhập
                         </label>
-                        <a href="/forgot-password">Quên mật khẩu?</a>
+
+                        <a href="javascript:void(0)"
+                            onclick="openForgotModal()">
+                            Quên mật khẩu?
+                        </a>
                     </div>
     
                     
@@ -137,6 +139,81 @@ if (!empty($_SESSION['user_id'])) {
  
 </div>
  
+
+<!-- =======================================
+FORGOT PASSWORD MODAL
+======================================= -->
+
+<div class="forgot-modal" id="forgotModal">
+
+    <div class="forgot-modal-box">
+
+        <div class="forgot-header">
+            Lấy lại mật khẩu
+        </div>
+
+        <div id="forgotAlert"></div>
+
+        <!-- STEP 1 -->
+        <div id="forgotStep1">
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="forgotEmail" placeholder="Nhập email của bạn">
+            </div>
+
+            <div class="form-group">
+                <label>Mã xác nhận</label>
+                <input type="text" id="forgotCode" placeholder="Nhập mã OTP">
+            </div>
+
+            <div class="forgot-actions">
+                <button class="btn-login"
+                        id="sendOtpBtn"
+                        onclick="sendResetCode()">
+                    Gửi mã
+                </button>
+                <button class="btn-login" onclick="verifyResetCode()">Xác nhận OTP</button>
+                <button class="btn-cancel-forgot" onclick="closeForgotModal()">Hủy</button>
+            </div>
+        </div>
+
+
+        <!-- STEP 2 -->
+        <div id="forgotStep2" style="display:none"> 
+
+            <div class="form-group">
+                <label>Mật khẩu mới</label>
+                <div class="password-wrapper">
+                    <input type="password" id="newPassword" autocomplete="new-password" placeholder="Nhập mật khẩu mới">
+                    <i class="fa-solid fa-eye-slash toggle-password" onclick="togglePassword('newPassword', this)"></i>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Xác nhận mật khẩu</label>
+                <div class="password-wrapper">
+                    <input type="password" id="confirmPassword" autocomplete="new-password" placeholder="Nhập lại mật khẩu mới">
+                    <i class="fa-solid fa-eye-slash toggle-password" onclick="togglePassword('confirmPassword', this)"></i>
+                </div>
+            </div>
+
+            
+            <div class="forgot-actions">
+                <button class="btn-login" onclick="resetPassword()">
+                    Đổi mật khẩu
+                </button>
+                <button class="btn-cancel-forgot" type="button" onclick="closeForgotModal()">
+                    Hủy
+                </button>
+            </div>
+
+        </div>
+
+
+    </div>
+
+</div>
+
  
 <script>
 function togglePassword(inputId, icon) {
@@ -188,6 +265,303 @@ function loginSocial(platform) {
 }
 
 
+const alertBox = document.querySelector('.alert-error');
+
+if (alertBox) {
+    setTimeout(() => {
+        alertBox.style.opacity = '0';
+        alertBox.style.transition = '0.3s';
+
+        setTimeout(() => {
+            alertBox.remove();
+        }, 300);
+
+    }, 4000);
+}
+
+
+
+// ======================================
+// FORGOT PASSWORD
+// ======================================
+
+function openForgotModal() {
+    document.getElementById('forgotModal')
+        .classList.add('active');
+}
+
+function closeForgotModal() {
+
+    document.getElementById('forgotModal')
+        .classList.remove('active');
+
+    document.getElementById('forgotStep1')
+        .style.display = 'block';
+
+    document.getElementById('forgotStep2')
+        .style.display = 'none';
+
+    document.getElementById('forgotEmail').value = '';
+    document.getElementById('forgotCode').value = '';
+    document.getElementById('newPassword').value = '';
+    document.getElementById('confirmPassword').value = '';
+
+    document.getElementById('forgotAlert')
+        .innerHTML = '';
+}
+
+function showForgotAlert(msg, type='error') {
+
+    const box =
+        document.getElementById('forgotAlert');
+
+    box.innerHTML = `
+        <div class="alert-${type} forgot-alert-box">
+            ${msg}
+        </div>
+    `;
+
+    setTimeout(() => {
+
+        const alert =
+            box.querySelector('.forgot-alert-box');
+
+        if (alert) {
+
+            alert.style.opacity = '0';
+
+            setTimeout(() => {
+                box.innerHTML = '';
+            }, 300);
+        }
+
+    }, 2500);
+}
+
+
+document.getElementById('forgotCode')
+    .addEventListener('keypress', function(e) {
+
+    if (e.key === 'Enter') {
+        verifyResetCode();
+    }
+});
+
+
+
+// SEND OTP
+let otpCooldown = 0;
+let otpTimer = null;
+
+function startOtpCooldown() {
+
+    const btn =
+        document.getElementById('sendOtpBtn');
+
+    if (!btn) return;
+
+    otpCooldown = 60;
+
+    btn.disabled = true;
+
+    btn.innerText =
+        `Gửi lại (${otpCooldown}s)`;
+
+    clearInterval(otpTimer);
+
+    otpTimer = setInterval(() => {
+
+        otpCooldown--;
+
+        btn.innerText =
+            `Gửi lại (${otpCooldown}s)`;
+
+        if (otpCooldown <= 0) {
+
+            clearInterval(otpTimer);
+
+            btn.disabled = false;
+
+            btn.innerText = 'Gửi mã';
+        }
+
+    }, 1000);
+}
+
+
+
+async function sendResetCode() {
+
+    try {
+
+        const email =
+            document.getElementById('forgotEmail').value;
+
+        const formData = new FormData();
+
+        formData.append('email', email);
+
+        const res = await fetch('/forgot-password/send', {
+            method:'POST',
+            body:formData
+        });
+
+        const text = await res.text();
+
+        console.log(text);
+
+        const data = JSON.parse(text);
+
+        if (data.success) {
+
+            startOtpCooldown();
+
+            showForgotAlert(
+                'Mã OTP đã được gửi về email',
+                'success'
+            );
+
+        } else {
+
+            showForgotAlert(data.message);
+        }
+
+    } catch (err) {
+
+        console.log(err);
+
+        showForgotAlert(
+            'Không thể gửi mã OTP'
+        );
+    }
+}
+
+
+
+// VERIFY OTP
+async function verifyResetCode() {
+
+    const code =
+        document.getElementById('forgotCode')
+        .value
+        .trim();
+
+    if (!code) {
+
+        showForgotAlert(
+            'Vui lòng nhập mã OTP'
+        );
+
+        return;
+    }
+
+    const formData = new FormData();
+
+    formData.append('code', code);
+
+    try {
+
+        const res = await fetch(
+            '/forgot-password/verify',
+            {
+                method:'POST',
+                body:formData
+            }
+        );
+
+        const text = await res.text();
+        console.log(text);
+        const data = JSON.parse(text);
+
+        if (data.success) {
+
+            document.getElementById('forgotStep1')
+                .style.display = 'none';
+
+            document.getElementById('forgotStep2')
+                .style.display = 'block';
+
+            showForgotAlert(
+                'Xác thực OTP thành công',
+                'success'
+            );
+
+        } else {
+
+            showForgotAlert(data.message);
+        }
+
+    } catch (e) {
+
+        showForgotAlert(
+            'Có lỗi xảy ra'
+        );
+    }
+}
+
+
+// RESET PASSWORD
+async function resetPassword() {
+
+    const password =
+        document.getElementById('newPassword')
+        .value;
+
+    const confirm =
+        document.getElementById('confirmPassword')
+        .value;
+
+    if (!password || !confirm) {
+
+        showForgotAlert(
+            'Vui lòng nhập đầy đủ mật khẩu'
+        );
+
+        return;
+    }
+
+    const formData = new FormData();
+
+    formData.append('password', password);
+    formData.append('confirm', confirm);
+
+    try {
+
+        const res = await fetch(
+            '/forgot-password/reset',
+            {
+                method:'POST',
+                body:formData
+            }
+        );
+
+        const text = await res.text();
+        console.log(text);
+        const data = JSON.parse(text);
+
+        if (data.success) {
+
+            showForgotAlert(
+                'Đổi mật khẩu thành công',
+                'success'
+            );
+
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
+
+        } else {
+
+            showForgotAlert(data.message);
+        }
+
+    } catch (e) {
+
+        showForgotAlert(
+            'Có lỗi xảy ra'
+        );
+    }
+}
 
 
 </script>

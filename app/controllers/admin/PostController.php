@@ -31,11 +31,19 @@ class PostController extends Controller
     {
         $categoryModel = new Category();
 
-        $categories = $categoryModel->getAll();
+        $flashError = $_SESSION['flash_error'] ?? null;
+        $flashOld   = $_SESSION['flash_old'] ?? [];
+
+        unset(
+            $_SESSION['flash_error'],
+            $_SESSION['flash_old']
+        );
 
         $this->viewAdmin('posts/create', [
-            'title' => 'Thêm bài viết',
-            'categories' => $categories
+            'title'       => 'Thêm bài viết',
+            'categories'  => $categoryModel->getAll(),
+            'flashError'  => $flashError,
+            'flashOld'    => $flashOld
         ]);
     }
 
@@ -44,12 +52,66 @@ class PostController extends Controller
     {
         $postModel = new Post();
 
-        $title = trim($_POST['title']);
-        $slug = trim($_POST['slug']);
+        $title      = trim($_POST['title'] ?? '');
+        $categoryId = (int)($_POST['categoryId'] ?? 0);
+        $content    = $_POST['content'] ?? '';
+        $isActive   = isset($_POST['isActive']) ? 1 : 0;
 
-        if ($postModel->exists($title, $slug)) {
+        $slugInput = trim($_POST['slug'] ?? '');
 
-            header("Location: /admin/posts/create?error=exists");
+        $titleError   = $postModel->validateTitle($title);
+        $contentError = $postModel->validateContent($content);
+
+        $slug = $slugInput
+            ? $postModel->toSlug($slugInput)
+            : $postModel->toSlug($title);
+
+        $old = [
+            'categoryId' => $categoryId,
+            'title'      => $title,
+            'slug'       => $slugInput,
+            'content'    => $content,
+            'isActive'   => $isActive,
+        ];
+
+        $_SESSION['flash_old'] = $old;
+
+        // EMPTY
+        if (
+            empty($categoryId) ||
+            empty($title)
+        ) {
+
+            $_SESSION['flash_error'] = 'empty_fields';
+
+            header("Location: /admin/posts/create");
+            exit;
+        }
+
+        // TITLE
+        if ($titleError) {
+
+            $_SESSION['flash_error'] = $titleError;
+
+            header("Location: /admin/posts/create");
+            exit;
+        }
+
+        // CONTENT
+        if ($contentError) {
+
+            $_SESSION['flash_error'] = $contentError;
+
+            header("Location: /admin/posts/create");
+            exit;
+        }
+
+        // EXISTS
+        if ($postModel->exists($categoryId, $title, $slug)) { 
+
+            $_SESSION['flash_error'] = 'exists';
+
+            header("Location: /admin/posts/create");
             exit;
         }
 
@@ -68,20 +130,22 @@ class PostController extends Controller
             $thumbnail = '/images/posts/' . $fileName;
         }
 
-        // excerpt auto
-        $plainText = strip_tags($_POST['content']);
+        $plainText = strip_tags($content);
 
         $excerpt = mb_substr($plainText, 0, 160);
 
         $postModel->createPost([
-            'categoryId' => $_POST['categoryId'],
-            'title' => $title,
-            'slug' => $slug,
-            'thumbnail' => $thumbnail,
-            'excerpt' => $excerpt,
-            'content' => $_POST['content'],
-            'createdBy' => $_SESSION['user']['userId']
+            'categoryId' => $categoryId,
+            'title'      => $title,
+            'slug'       => $slug,
+            'thumbnail'  => $thumbnail,
+            'excerpt'    => $excerpt,
+            'content'    => $content,
+            'isActive'   => $isActive,
+            'createdBy'  => $_SESSION['user']['userId'] ?? null,
         ]);
+
+        unset($_SESSION['flash_old']);
 
         header("Location: /admin/posts?success=created");
         exit;
@@ -94,14 +158,22 @@ class PostController extends Controller
 
         $categoryModel = new Category();
 
+        $flashError = $_SESSION['flash_error'] ?? null;
+        $flashOld   = $_SESSION['flash_old'] ?? [];
+
+        unset(
+            $_SESSION['flash_error'],
+            $_SESSION['flash_old']
+        );
+
         $post = $postModel->find($id);
 
-        $categories = $categoryModel->getAll();
-
         $this->viewAdmin('posts/edit', [
-            'title' => 'Cập nhật bài viết',
-            'post' => $post,
-            'categories' => $categories
+            'title'       => 'Cập nhật bài viết',
+            'post'        => $post,
+            'categories'  => $categoryModel->getAll(),
+            'flashError'  => $flashError,
+            'flashOld'    => $flashOld
         ]);
     }
 
@@ -110,15 +182,70 @@ class PostController extends Controller
     {
         $postModel = new Post();
 
-        $id = $_POST['id'];
+        $id = (int)($_POST['id'] ?? 0);
 
-        if ($postModel->exists(
-            $_POST['title'],
-            $_POST['slug'],
-            $id
-        )) {
+        $title      = trim($_POST['title'] ?? '');
+        $categoryId = (int)($_POST['categoryId'] ?? 0);
+        $content    = $_POST['content'] ?? '';
+        $isActive   = isset($_POST['isActive']) ? 1 : 0;
 
-            header("Location: /admin/posts/edit/$id?error=exists");
+        $slugInput = trim($_POST['slug'] ?? '');
+
+        $slug = $slugInput
+            ? $postModel->toSlug($slugInput)
+            : $postModel->toSlug($title);
+
+        // validate
+        $titleError   = $postModel->validateTitle($title);
+        $contentError = $postModel->validateContent($content);
+
+        // old data
+        $old = [
+            'categoryId' => $categoryId,
+            'title'      => $title,
+            'slug'       => $slugInput,
+            'content'    => $content,
+            'isActive'   => $isActive
+        ];
+
+        $_SESSION['flash_old'] = $old;
+
+        // EMPTY
+        if (
+            empty($categoryId) ||
+            empty($title)
+        ) {
+
+            $_SESSION['flash_error'] = 'empty_fields';
+
+            header("Location: /admin/posts/edit/$id");
+            exit;
+        }
+
+        // TITLE
+        if ($titleError) {
+
+            $_SESSION['flash_error'] = $titleError;
+
+            header("Location: /admin/posts/edit/$id");
+            exit;
+        }
+
+        // CONTENT
+        if ($contentError) {
+
+            $_SESSION['flash_error'] = $contentError;
+
+            header("Location: /admin/posts/edit/$id");
+            exit;
+        }
+
+        // EXISTS
+        if ($postModel->exists($categoryId, $title, $slug, $id)) {
+
+            $_SESSION['flash_error'] = 'exists';
+
+            header("Location: /admin/posts/edit/$id");
             exit;
         }
 
@@ -139,28 +266,52 @@ class PostController extends Controller
             $thumbnail = '/images/posts/' . $fileName;
         }
 
-        $plainText = strip_tags($_POST['content']);
+        // excerpt
+        $plainText = strip_tags($content);
 
-        $excerpt = mb_substr($plainText, 0, 160);
+        $excerpt = mb_substr(trim($plainText), 0, 160);
 
         $postModel->updatePost($id, [
-            'categoryId' => $_POST['categoryId'],
-            'title' => $_POST['title'],
-            'slug' => $_POST['slug'],
-            'thumbnail' => $thumbnail,
-            'excerpt' => $excerpt,
-            'content' => $_POST['content']
+            'categoryId' => $categoryId,
+            'title'      => $title,
+            'slug'       => $slug,
+            'thumbnail'  => $thumbnail,
+            'excerpt'    => $excerpt,
+            'content'    => $content,
+            'isActive'   => $isActive
         ]);
+
+        unset($_SESSION['flash_old']);
 
         header("Location: /admin/posts?success=updated");
         exit;
     }
+
 
     // ================= DELETE =================
     public function delete($id)
     {
         $postModel = new Post();
 
+        $post = $postModel->find($id);
+
+        if (!$post) {
+
+            header("Location: /admin/posts");
+            exit;
+        }
+
+        // xóa ảnh nếu có
+        if (!empty($post['thumbnail'])) {
+
+            $imagePath = ROOT . '/public' . $post['thumbnail'];
+
+            if (file_exists($imagePath)) {
+                unlink($imagePath);
+            }
+        }
+
+        // xóa bài viết
         $postModel->deletePost($id);
 
         header("Location: /admin/posts?success=deleted");
@@ -168,40 +319,77 @@ class PostController extends Controller
     }
 
 
-    // ================= SHOW (chi tiết bài viết - user) =================
-    public function show($categorySlug, $postSlug)
+    public function search()
     {
+        $keyword = trim($_GET['keyword'] ?? '');
+
         $postModel = new Post();
 
-        // Lấy chi tiết bài viết kèm category
-        $post = $postModel->getBySlug($postSlug);
+        if ($keyword === '') {
 
-        // 404 nếu không tìm thấy hoặc sai category
-        if (!$post || $post['categorySlug'] !== $categorySlug) {
-            http_response_code(404);
-            $this->view('errors/404', ['title' => 'Không tìm thấy bài viết']);
+            $posts = $postModel->getPaginate(999, 0);
+
+        } else {
+
+            $posts = $postModel->searchPosts($keyword);
+        }
+
+        if (empty($posts)) {
+
+            echo '
+            <tr>
+                <td colspan="7" class="text-center">
+                    Không có bài viết nào
+                </td>
+            </tr>
+            ';
+
             return;
         }
 
-        // Lấy thông tin tác giả
-        require_once ROOT . '/app/models/User.php';
-        $userModel = new User();
-        $author = $userModel->find($post['createdBy']);
+        foreach ($posts as $p) {
+            ?>
 
-        // Lấy bài viết liên quan cùng danh mục
-        $relatedPosts = $postModel->getRelated(
-            $post['categoryId'],
-            $post['postId'],
-            4
-        );
+            <tr>
 
+                <td><?= $p['postId'] ?></td>
 
-        $this->view('user/posts/show', [
-            'title'        => $post['title'],
-            'post'         => $post,
-            'author'       => $author,
-            'relatedPosts' => $relatedPosts,
-        ]);
+                <td><?= htmlspecialchars($p['categoryName']) ?></td>
+
+                <td><?= htmlspecialchars($p['title']) ?></td>
+
+                <td><?= htmlspecialchars($p['slug']) ?></td>
+
+                <td>
+                    <?= date('d/m/Y', strtotime($p['createdAt'])) ?>
+                </td>
+
+                <td>
+                    <?= htmlspecialchars($p['authorName'] ?? 'Admin') ?>
+                </td>
+
+                <td>
+
+                    <div class="admin-actions">
+
+                        <a href="/admin/posts/edit/<?= $p['postId'] ?>"
+                        class="action-btn btn-edit">
+                            ✏
+                        </a>
+
+                        <button class="action-btn btn-delete"
+                                onclick="openDeletePost(<?= $p['postId'] ?>)">
+                            🗑
+                        </button>
+
+                    </div>
+
+                </td>
+
+            </tr>
+
+            <?php
+        }
     }
 
 

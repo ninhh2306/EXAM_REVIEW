@@ -4,7 +4,6 @@ require_once ROOT . '/app/models/Grade.php';
 
 class GradeController extends Controller
 {
-    // index() — thêm đọc flash session
     public function index()
     {
         $model     = new Grade();
@@ -32,39 +31,78 @@ class GradeController extends Controller
     }
 
 
+    public function checkName()
+    {
+        $name = trim($_GET['name'] ?? '');
+        $id   = $_GET['id'] ?? null;
+
+        $model = new Grade();
+
+        if ($id) {
+            $exists = $model->existsNameExcept($name, $id);
+        } else {
+            $exists = $model->existsName($name);
+        }
+
+        echo json_encode([
+            'exists' => $exists
+        ]);
+    }
+
+
     public function store()
-{
-    $name    = trim($_POST['name'] ?? '');
-    $slugInp = trim($_POST['slug'] ?? '');
+    {
+        $name    = trim($_POST['name'] ?? '');
+        $slugInp = trim($_POST['slug'] ?? '');
 
-    $model = new Grade();
-    $slug  = empty($slugInp) ? $model->toSlug($name) : $model->toSlug($slugInp);
+        $model = new Grade();
 
-    if ($model->existsFull($name, $slug)) {
+        $slug = empty($slugInp)
+            ? $model->toSlug($name)
+            : $model->toSlug($slugInp);
 
-        $_SESSION['flash_error'] = 'exists';
-        $_SESSION['flash_old']   = [
-            'name' => $name,
-            'slug' => $slug,
-        ];
+        // ===== CHECK NAME =====
+        if ($model->existsName($name)) {
 
-        header("Location: /admin/grades");
+            $_SESSION['flash_error'] = 'name_exists';
+
+            $_SESSION['flash_old'] = [
+                'name' => $name,
+                'slug' => $slug,
+            ];
+
+            header("Location: /admin/grades");
+            exit;
+        }
+
+        // ===== CHECK SLUG =====
+        if ($model->existsSlug($slug)) {
+
+            $_SESSION['flash_error'] = 'slug_exists';
+
+            $_SESSION['flash_old'] = [
+                'name' => $name,
+                'slug' => $slug,
+            ];
+
+            header("Location: /admin/grades");
+            exit;
+        }
+
+        // ===== CREATE =====
+        $model->create($name, $slug);
+
+        unset($_SESSION['flash_error'], $_SESSION['flash_old']);
+
+        header("Location: /admin/grades?success=created");
         exit;
     }
 
-    $model->create($name, $slug);
-
-    unset($_SESSION['flash_error'], $_SESSION['flash_old']);
-
-    header("Location: /admin/grades?success=created");
-    exit;
-}
-
     public function update()
     {
-        $id      = $_POST['id']   ?? null;
-        $name    = trim($_POST['name']  ?? '');
-        $slugInp = trim($_POST['slug']  ?? '');
+        $id      = $_POST['id'] ?? null;
+        $name    = trim($_POST['name'] ?? '');
+        $slugInp = trim($_POST['slug'] ?? '');
 
         if (!$id) {
             header("Location: /admin/grades");
@@ -72,12 +110,17 @@ class GradeController extends Controller
         }
 
         $model = new Grade();
-        $slug  = empty($slugInp) ? $model->toSlug($name) : $model->toSlug($slugInp);
 
-        if ($model->existsFullExcept($name, $slug, $id)) {
+        $slug = empty($slugInp)
+            ? $model->toSlug($name)
+            : $model->toSlug($slugInp);
 
-            $_SESSION['flash_error'] = 'exists';
-            $_SESSION['flash_old']   = [
+        // ===== CHECK NAME =====
+        if ($model->existsNameExcept($name, $id)) {
+
+            $_SESSION['flash_error'] = 'name_exists';
+
+            $_SESSION['flash_old'] = [
                 'id'   => $id,
                 'name' => $name,
                 'slug' => $slug,
@@ -87,6 +130,22 @@ class GradeController extends Controller
             exit;
         }
 
+        // ===== CHECK SLUG =====
+        if ($model->existsSlugExcept($slug, $id)) {
+
+            $_SESSION['flash_error'] = 'slug_exists';
+
+            $_SESSION['flash_old'] = [
+                'id'   => $id,
+                'name' => $name,
+                'slug' => $slug,
+            ];
+
+            header("Location: /admin/grades");
+            exit;
+        }
+
+        // ===== UPDATE =====
         $model->update($id, $name, $slug);
 
         unset($_SESSION['flash_error'], $_SESSION['flash_old']);
@@ -95,13 +154,41 @@ class GradeController extends Controller
         exit;
     }
 
-    
     public function delete($id)
     {
-        $model = new Grade();
-        $model->delete($id);
+        $gradeModel = new Grade();
+
+        if ($gradeModel->hasSubjects($id)) {
+            header("Location: /admin/grades?error=has_subjects");
+            exit;
+        }
+
+        if ($gradeModel->hasExams($id)) {
+            header("Location: /admin/grades?error=has_exams");
+            exit;
+        }
+
+        $gradeModel->delete($id);
 
         header("Location: /admin/grades?success=deleted");
         exit;
     }
+
+
+    public function ajaxSearch()
+    {
+        $keyword = trim($_GET['keyword'] ?? '');
+
+        $model = new Grade();
+
+        if ($keyword === '') {
+            echo json_encode($model->getAll());
+            return;
+        }
+
+        echo json_encode(
+            $model->search($keyword)
+        );
+    }
+
 }

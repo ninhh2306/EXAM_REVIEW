@@ -7,12 +7,12 @@
 /** @var array $flashOld */
 
 $errorMessages = [
-    'sort_exists' => 'Số thứ tự này đã có bài học, vui lòng chọn lại!',
-    'slug_exists' => 'Slug đã tồn tại trong chương học này!',
-    'name_exists' => 'Tên bài học đã tồn tại trong chương học này!',
+    'slug_exists'    => 'Slug đã tồn tại trong chương học này!',
+    'name_exists'    => 'Tên bài học đã tồn tại trong chương học này!',
+    'empty_content'  => 'Nội dung bài học không được để trống!',
+    'empty_fields'   => 'Vui lòng điền đầy đủ thông tin!',
 ];
 
-// Ưu tiên flash old nếu vừa submit lỗi, không thì dùng data từ DB
 $d = !empty($flashOld) ? $flashOld : $lesson;
 ?>
 
@@ -34,22 +34,19 @@ $d = !empty($flashOld) ? $flashOld : $lesson;
 
         <?php if ($flashError): ?>
             <div class="alert-error mb-3">
-                <?= $errorMessages[$flashError] ?? 'Có lỗi xảy ra!' ?>
+                <?= htmlspecialchars($errorMessages[$flashError] ?? $flashError) ?>
             </div>
         <?php endif; ?>
 
         <form method="POST" action="/admin/lessons/update">
 
-            <input type="hidden" name="id"      value="<?= $lesson['lessonId'] ?>">
-            <input type="hidden" name="gradeId" value="<?= $d['gradeId'] ?? $lesson['gradeId'] ?>">
+            <input type="hidden" name="id" value="<?= $lesson['lessonId'] ?>">
 
             <div class="lesson-row-4">
 
                 <div class="lesson-group">
                     <label>Khối lớp</label>
-                    <select name="gradeId"
-                            id="gradeSelect"
-                            required>
+                    <select name="gradeId" id="gradeSelect" required>
                         <option value="">Chọn khối lớp</option>
                         <?php foreach ($grades as $g): ?>
                             <option value="<?= $g['gradeId'] ?>"
@@ -62,9 +59,7 @@ $d = !empty($flashOld) ? $flashOld : $lesson;
 
                 <div class="lesson-group">
                     <label>Môn học</label>
-                    <select name="subjectId"
-                            id="subjectSelect"
-                            required>
+                    <select name="subjectId" id="subjectSelect" required>
                         <option value="">Chọn môn học</option>
                         <?php foreach ($subjects as $s): ?>
                             <option value="<?= $s['subjectId'] ?>"
@@ -77,27 +72,24 @@ $d = !empty($flashOld) ? $flashOld : $lesson;
 
                 <div class="lesson-group">
                     <label>Chương học</label>
-                    <select name="chapterId"
-                            id="chapterSelect"
-                            required>
+                    <select name="chapterId" id="chapterSelect" required
+                            data-current-lesson-id="<?= (int)$lesson['lessonId'] ?>">
                         <option value="">Chọn chương học</option>
                         <?php foreach ($chapters as $c): ?>
                             <option value="<?= $c['chapterId'] ?>"
                                 <?= $c['chapterId'] == ($d['chapterId'] ?? $lesson['chapterId']) ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($c['chapterName']) ?>
+                                Chương <?= $c['sortOrder'] ?>: <?= htmlspecialchars($c['chapterName']) ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
 
                 <div class="lesson-group">
-                    <label>Số thứ tự <small style="color:#999">(để sắp xếp)</small></label>
-                    <input type="number"
-                           name="sortOrder"
-                           id="lesson_sort"
-                           min="1"
-                           value="<?= htmlspecialchars($d['sortOrder'] ?? $lesson['sortOrder']) ?>"
-                           required>
+                    <label>Vị trí hiển thị</label>
+                    <select name="positionValue" id="lessonPositionSelect">
+                        <option value="last">Hiển thị cuối cùng</option>
+                        <option value="first">Hiển thị đầu tiên</option>
+                    </select>
                 </div>
 
             </div>
@@ -114,13 +106,24 @@ $d = !empty($flashOld) ? $flashOld : $lesson;
                 </div>
 
                 <div class="lesson-group lesson-slug">
-                    <label>Slug <small style="color:#999">(có thể sửa — cẩn thận làm hỏng link cũ)</small></label>
+                    <label>Slug</label>
                     <input type="text"
                            name="slug"
                            id="lesson_slug"
                            value="<?= htmlspecialchars($d['slug'] ?? $lesson['slug']) ?>">
                 </div>
 
+            </div>
+
+            <div class="lesson-group lesson-status">
+                <label>Trạng thái</label>
+                <label class="switch">
+                    <input type="checkbox"
+                           name="isActive"
+                           value="1"
+                           <?= (int)($d['isActive'] ?? $lesson['isActive']) === 1 ? 'checked' : '' ?>>
+                    <span class="slider round"></span>
+                </label>
             </div>
 
             <div class="lesson-group lesson-editor">
@@ -135,9 +138,76 @@ $d = !empty($flashOld) ? $flashOld : $lesson;
             </div>
 
         </form>
-
     </div>
-
 </div>
 
-<script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
+
+
+<?php ob_start(); ?>
+<script>
+$(document).ready(function () {
+
+    const currentId        = <?= (int)$lesson['lessonId'] ?>;
+    const currentSortOrder = <?= (int)($d['sortOrder'] ?? $lesson['sortOrder']) ?>;
+    const currentChapterId = <?= (int)($d['chapterId'] ?? $lesson['chapterId']) ?>;
+
+    if (currentChapterId) {
+        loadLessonPositionsForEdit(currentChapterId, currentId, currentSortOrder);
+    }
+
+    $('#chapterSelect').on('change', function () {
+        const chapterId = $(this).val();
+        if (chapterId) {
+            loadLessonPositionsForEdit(chapterId, currentId, null);
+        }
+    });
+});
+
+
+function loadLessonPositionsForEdit(chapterId, currentId, currentSortOrder) {
+    $.get('/admin/ajax/lessons-by-chapter?chapter_id=' + chapterId, function (data) {
+
+        let html = `
+            <option value="last">Hiển thị cuối cùng</option>
+            <option value="first">Hiển thị đầu tiên</option>
+        `;
+
+        let selectedVal = 'last';
+
+        if (Array.isArray(data) && data.length > 0) {
+
+            html += `<optgroup label="Hiển thị sau...">`;
+
+            $.each(data, function (i, lesson) {
+
+                if (lesson.lessonId == currentId) return;
+
+                html += `
+                    <option value="after-${lesson.lessonId}">
+                        Bài ${lesson.sortOrder}: ${lesson.lessonName}
+                    </option>
+                `;
+
+                if (
+                    currentSortOrder !== null &&
+                    parseInt(lesson.sortOrder) === parseInt(currentSortOrder) - 1
+                ) {
+                    selectedVal = 'after-' + lesson.lessonId;
+                }
+
+            });
+
+            html += `</optgroup>`;
+
+            // fallback
+            if (currentSortOrder == 1) {
+                selectedVal = 'first';
+            }
+        }
+
+        $('#lessonPositionSelect').html(html);
+        $('#lessonPositionSelect').val(selectedVal);
+    });
+}
+</script>
+<?php $pageScripts = ob_get_clean(); ?>

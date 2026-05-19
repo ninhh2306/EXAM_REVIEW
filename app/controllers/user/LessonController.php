@@ -127,7 +127,7 @@ class LessonController extends Controller
 
         // ===== RELATED =====
         $relatedLessons = $lessonModel->getBySubject($subject['subjectId']);
-        $relatedExams   = $examModel->getBySubject($subject['subjectId']);
+        $relatedExams = $examModel->getBySubjectExcludeThpt($subject['subjectId']);
 
         // ===== VIEW =====
         $this->view('lessons/detail', compact(

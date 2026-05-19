@@ -110,7 +110,7 @@ CONTENT LIST
 
             <div class="content-block__body">
                 <?php if(empty($exams)): ?>
-                    <p class="content-block__empty">Chưa có đề thi.</p>
+                    <p class="content-block__empty">Môn học này chưa có đề thi</p>
                 <?php else: ?>
                     <ul class="content-block__list">
                         <?php foreach(array_slice($exams, 0, 5) as $exam): ?>

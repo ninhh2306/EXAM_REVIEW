@@ -4,20 +4,24 @@ require_once ROOT . '/app/core/Model.php';
 
 class Subject extends Model
 {
+
     public function getByGrade($gradeId)
     {
-        $sql = "SELECT * FROM subjects WHERE gradeId = ?";
+        $sql = "
+            SELECT *
+            FROM subjects
+            WHERE gradeId = ?
+            ORDER BY subjectName ASC
+        ";
+
         return $this->fetchAll($sql, [$gradeId]);
     }
-
 
     public function getById($subjectId)
     {
         $sql = "SELECT * FROM subjects WHERE subjectId = ?";
         return $this->fetch($sql, [$subjectId]);
     }
-
-
 
     // lấy theo slug
     public function getBySlug($slug)
@@ -26,7 +30,6 @@ class Subject extends Model
         return $this->fetch($sql, [$slug]);
     }
 
-
     // dùng cho URL dạng /lop-10/lich-su
     public function getBySlugAndGrade($slug, $gradeId)
     {
@@ -34,10 +37,34 @@ class Subject extends Model
         return $this->fetch($sql, [$slug, $gradeId]);
     }
 
+    public function searchSubjects($keyword)
+    {
+        $sql = "
+            SELECT 
+                s.*,
+                g.gradeName,
+                g.slug as gradeSlug
+
+            FROM subjects s
+
+            JOIN grades g
+                ON s.gradeId = g.gradeId
+
+            WHERE
+                s.subjectName LIKE ?
+                OR s.slug LIKE ?
+
+            ORDER BY s.subjectName ASC
+        ";
+
+        return $this->fetchAll($sql, [
+            "%{$keyword}%",
+            "%{$keyword}%"
+        ]);
+    }
 
 
-
-    // ========== ADMIN ==========
+    // ================= ADMIN ==================
     public function getAll()
     {
         $sql = "SELECT s.*, g.gradeName 
@@ -136,6 +163,74 @@ class Subject extends Model
     {
         $sql = "DELETE FROM subjects WHERE subjectId = ?";
         return $this->execute($sql, [$id]);
+    }
+
+    public function hasChapters($subjectId)
+    {
+        $sql = "SELECT 1 FROM chapters WHERE subjectId = ? LIMIT 1";
+        return !empty($this->fetch($sql, [$subjectId]));
+    }
+
+    public function hasExams($subjectId)
+    {
+        $sql = "SELECT 1 FROM exams WHERE subjectId = ? LIMIT 1";
+        return !empty($this->fetch($sql, [$subjectId]));
+    }
+
+    // ================= ADMIN SEARCH =================
+    public function searchAdminSubjects($keyword)
+    {
+        $sql = "
+            SELECT 
+                s.*,
+                g.gradeName
+
+            FROM subjects s
+
+            JOIN grades g
+                ON s.gradeId = g.gradeId
+
+            WHERE
+                s.subjectName LIKE ?
+                OR s.slug LIKE ?
+                OR g.gradeName LIKE ?
+
+            ORDER BY s.subjectId DESC
+
+            LIMIT 50
+        ";
+
+        return $this->fetchAll($sql, [
+            "%{$keyword}%",
+            "%{$keyword}%",
+            "%{$keyword}%"
+        ]);
+    }
+
+
+
+    // =====================================================
+    // MÔN HỌC LỚP 12
+    // =====================================================
+
+    public function getGrade12Subjects()
+    {
+        $stmt = $this->db->prepare("
+            SELECT *
+            FROM subjects
+            WHERE gradeId = (
+                SELECT gradeId
+                FROM grades
+                WHERE slug = 'lop-12'
+                LIMIT 1
+            )
+
+            ORDER BY subjectName ASC
+        ");
+
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
 

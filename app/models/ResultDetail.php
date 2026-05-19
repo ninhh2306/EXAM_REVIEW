@@ -1,6 +1,6 @@
 <?php
 
-require_once "../app/core/Model.php";
+require_once ROOT . "/app/core/Model.php";
 
 class ResultDetail extends Model
 {

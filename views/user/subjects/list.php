@@ -3,6 +3,8 @@
 /** @var array $subject */
 /** @var array $subjects */
 
+$isLoggedIn = !empty($_SESSION['user_id']);
+
 ?>
 
 <!-- =========================
@@ -38,14 +40,15 @@
 
             <div class="hero-buttons">
 
-            <a href="#" class="btn btn-primary btn-lg">
-            Bắt đầu học ngay
+            <a href="<?= $isLoggedIn ? $_SERVER['REQUEST_URI'] : $base . '/register' ?>" 
+                class="btn btn-primary btn-lg">
+                Bắt đầu học ngay
             </a>
 
-            <a href="#" class="btn btn-outline btn-lg">
-            Lộ trình học tập
+            <a href="<?= $_SERVER['REQUEST_URI'] ?>" 
+                class="btn btn-outline btn-lg">
+                Lộ trình học tập
             </a>
-
         </div>
 
     </div>
