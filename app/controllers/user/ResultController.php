@@ -58,9 +58,10 @@ class ResultController extends Controller
         $suggested = [];
         if (!empty($exam['subjectId'])) {
             $suggested = $examModel->getSuggested(
-                $exam['subjectId'],   // ✅ FIX QUAN TRỌNG
+                $exam['subjectId'],
                 $exam['examId'],
-                3
+                $exam['examType'],  
+                5                   
             );
         }
 

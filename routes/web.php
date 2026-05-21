@@ -60,7 +60,7 @@ $router->get('/api/exam-check', 'ExamController@apiCheckExam');
 
 // Trang chi tiết bài học và đề ôn
 $router->get('/{gradeSlug}/{subjectSlug}/ly-thuyet/{chapterSlug}/{lessonSlug}', 'LessonController@show');
-$router->get('/{gradeSlug}/{subjectSlug}/trac-nghiem/{examSlug}', 'ExamController@show');
+$router->get('/{gradeSlug}/{subjectSlug}/trac-nghiem/{examSlug}-{examId}', 'ExamController@show');
 
 // Danh sách bài học và đề ôn
 $router->get('/{gradeSlug}/{subjectSlug}/ly-thuyet', 'LessonController@index');

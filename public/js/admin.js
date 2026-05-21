@@ -557,8 +557,9 @@ function resetChapterModal() {
     `);
 
     $('#positionSelect').html(`
-        <option value="last">Hiển thị cuối cùng</option>
         <option value="first">Hiển thị đầu tiên</option>
+        <option value="last">Hiển thị cuối cùng</option>
+        
     `);
 
     document.getElementById("chapterModalTitle").innerText =
@@ -783,8 +784,8 @@ $(document).ready(function () {
             // Reset position khi đổi grade (chapter page)
             if (isChapterPage) {
                 $('#positionSelect').html(`
-                    <option value="last">Hiển thị cuối cùng</option>
                     <option value="first">Hiển thị đầu tiên</option>
+                    <option value="last">Hiển thị cuối cùng</option>
                 `);
             }
         });
@@ -957,11 +958,7 @@ function openDeleteLesson(id) {
             let html2 = '<option value=""> Chọn chương học</option>';
 
             chapters.forEach(c => {
-                html2 += `
-                    <option value="${c.chapterId}">
-                        ${c.chapterName}
-                    </option>
-                `;
+                html2 += `<option value="${c.chapterId}">Chương ${c.sortOrder}: ${c.chapterName}</option>`;              
             });
 
             chapterSelect.innerHTML = html2;
@@ -1501,8 +1498,8 @@ $(document).ready(function () {
             $('#chapterSelect').html(html);
             // Reset position khi đổi subject
             $('#lessonPositionSelect').html(`
-                <option value="last">Hiển thị cuối cùng</option>
                 <option value="first">Hiển thị đầu tiên</option>
+                <option value="last">Hiển thị cuối cùng</option>
             `);
         });
     });
@@ -1534,7 +1531,7 @@ $(document).ready(function () {
         $.get('/admin/ajax/lessons?chapter_id=' + chapterId, function (data) {
             let html = '<option value="">Chọn bài học</option>';
             data.forEach(item => {
-                html += `<option value="${item.lessonId}">${item.lessonName}</option>`;
+                html += `<option value="${item.lessonId}">Bài ${item.sortOrder}: ${item.lessonName}</option>`;
             });
             $('#lessonSelect').html(html);
         });

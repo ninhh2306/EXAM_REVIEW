@@ -182,13 +182,8 @@ $oldSlug      = $flashOld['slug']      ?? '';
 
                 <label>Vị trí hiển thị</label>
                 <select name="positionValue" id="positionSelect">
-                    <option value="last">
-                        Hiển thị cuối cùng
-                    </option>
-
-                    <option value="first">
-                        Hiển thị đầu tiên
-                    </option>
+                    <option value="first">Hiển thị đầu tiên</option>
+                    <option value="last">Hiển thị cuối cùng</option>
                 </select>
 
                 <label>Slug</label>
@@ -229,8 +224,8 @@ function loadChapterPositions(selectedValue = 'last') {
 
     $.get('/admin/ajax/chapters-by-subject?subject_id=' + subjectId, function(data) {
         let html = `
-            <option value="last">Hiển thị cuối cùng</option>
             <option value="first">Hiển thị đầu tiên</option>
+            <option value="last">Hiển thị cuối cùng</option>  
         `;
         if (Array.isArray(data) && data.length > 0) {
             html += `<optgroup label="Hiển thị sau...">`;

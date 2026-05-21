@@ -1254,6 +1254,7 @@ img { max-width: 100%; display: block; }
     margin-top: 5px;
     border-radius: 8px;
     border: 1px solid #ddd;
+    box-sizing: border-box;
 }
 
 /* OPTIONS */
@@ -1622,6 +1623,7 @@ FORGOT PASSWORD MODAL TỐI ƯU
     border-radius: 10px;
     border: 1px solid #ddd;
     margin-top: 5px;
+    box-sizing: border-box;
 }
 
 .form-row {

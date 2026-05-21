@@ -128,7 +128,7 @@ $targetOffset  = $circumference - ($circumference * ($realScore / 10));
         <!-- Buttons -->
         <div class="result-card__actions">
             <!-- 1. Thử làm lại: Dùng slug của bài thi hiện tại -->
-            <a href="<?= $base ?>/<?= $grade['slug'] ?>/<?= $subject['slug'] ?>/trac-nghiem/<?= $exam['slug'] ?>"
+            <a href="<?= $base ?>/<?= $grade['slug'] ?>/<?= $subject['slug'] ?>/trac-nghiem/<?= $exam['slug'] ?>-<?= $exam['examId'] ?>"
                class="result-btn result-btn--yellow">
                 🔄 Thử làm lại
             </a>
@@ -161,7 +161,8 @@ $targetOffset  = $circumference - ($circumference * ($realScore / 10));
  
         <div class="suggested__grid">
             <?php foreach ($suggested as $suggestedExam): ?>
-                <a href="/<?= htmlspecialchars($grade['slug'] ?? '') ?>/<?= htmlspecialchars($subject['slug'] ?? '') ?>/trac-nghiem/<?= htmlspecialchars($suggestedExam['slug'] ?? '') ?>"
+                <a href="/<?= htmlspecialchars($grade['slug'] ?? '') ?>/<?= htmlspecialchars($subject['slug'] ?? '')
+                     ?>/trac-nghiem/<?= htmlspecialchars($suggestedExam['slug'] ?? '') ?>-<?= (int)($suggestedExam['examId'] ?? 0) ?>"
                    class="suggested-card">
  
                     <!-- Tên đề -->

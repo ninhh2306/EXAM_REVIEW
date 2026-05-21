@@ -159,7 +159,8 @@
                                     $gradeSlug   = $exam['gradeSlug']   ?? '';
                                     $subjectSlug = $exam['subjectSlug'] ?? '';
                                     $examSlug    = $exam['slug']        ?? '';
-                                    $examUrl     = "/{$gradeSlug}/{$subjectSlug}/trac-nghiem/{$examSlug}";
+                                    $examId      = $exam['examId']      ?? '';
+                                    $examUrl     = "/{$gradeSlug}/{$subjectSlug}/trac-nghiem/{$examSlug}-{$examId}";
                                 ?>
                                 <a href="<?= htmlspecialchars($examUrl) ?>"
                                    class="index-card__btn index-card__btn--green">

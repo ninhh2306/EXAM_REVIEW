@@ -89,6 +89,25 @@ class Exam extends Model
     }
 
 
+    public function getByIdAndSubject($examId, $subjectId)
+    {
+        $stmt = $this->db->prepare("
+            SELECT 
+                e.*,
+                COUNT(eq.questionId) AS realTotalQuestions
+            FROM exams e
+            LEFT JOIN exam_questions eq ON eq.examId = e.examId
+            WHERE e.examId    = ?
+            AND e.subjectId = ?
+            AND e.isActive  = 1
+            GROUP BY e.examId
+            LIMIT 1
+        ");
+        $stmt->execute([$examId, $subjectId]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+
     // Lấy đề thi theo chương
     public function getByChapter($chapterId)
     {
@@ -103,7 +122,7 @@ class Exam extends Model
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // Lấy đề thi theo loại (lesson, chapter, practice, midterm...)
+    // Lấy đề thi theo loại
     public function getByType($subjectId, $examType)
     {
         $stmt = $this->db->prepare(
@@ -144,19 +163,25 @@ class Exam extends Model
 
 
     // Lấy đề thi gợi ý cùng môn, loại trừ đề hiện tại
-    // Dùng trong ResultController::show() sau khi nộp bài
-    public function getSuggested($subjectId, $excludeExamId, $limit = 3)
+    public function getSuggested($subjectId, $excludeExamId, $examType = 'lesson', $limit = 5)
     {
-        $limit = (int)$limit; // ép kiểu an toàn
+        $limit = (int)$limit;
 
-        $stmt = $this->db->prepare(
-            "SELECT * FROM exams
-            WHERE subjectId = ? AND examId != ? AND isActive = 1
+        // Nếu examType là 'thpt' thì lấy đề thpt, còn lại lấy 'lesson'
+        $allowedType = ($examType === 'thpt') ? 'thpt' : 'lesson';
+
+        $stmt = $this->db->prepare("
+            SELECT * FROM exams
+            WHERE subjectId    = ?
+            AND   examId       != ?
+            AND   isActive     = 1
+            AND   examType     = ?
+            AND   isTemporary  = 0
             ORDER BY viewCount DESC, createdAt DESC
-            LIMIT $limit" 
-        );
+            LIMIT $limit
+        ");
 
-        $stmt->execute([$subjectId, $excludeExamId]);
+        $stmt->execute([$subjectId, $excludeExamId, $allowedType]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 

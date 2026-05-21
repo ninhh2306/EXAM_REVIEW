@@ -148,9 +148,7 @@ $old = $flashOld ?? [];
                             id="lessonSelect"
                             data-saved="<?= $old['lessonId'] ?? '' ?>">
 
-                        <option value="">
-                            Chọn bài học
-                        </option>
+                        <option value="">Chọn bài học</option>
 
                     </select>
                 </div>
@@ -682,5 +680,7 @@ document.getElementById('excelInput')
     );
 
 })();
+
+
 
 </script>

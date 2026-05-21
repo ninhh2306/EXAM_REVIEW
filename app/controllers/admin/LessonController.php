@@ -37,7 +37,7 @@ class LessonController extends Controller
 
         $this->viewAdmin('lessons/create', [
             'title'      => 'Thêm bài học',
-            'grades'     => $gradeModel->getAll(),
+            'grades'     => $gradeModel->getAllAsc(),
             'flashError' => $flashError,
             'flashOld'   => $flashOld,
         ]);

@@ -203,87 +203,60 @@
 
 
 <script>
-const totalQ    = <?= count($questions) ?>;
-const examId    = <?= $exam['examId'] ?>;
-const duration  = <?= $exam['duration'] ?>;
+const totalQ   = <?= count($questions) ?>;
+const examId   = <?= $exam['examId'] ?>;
+const duration = <?= $exam['duration'] ?>;
 
- 
-// Storage keys
-const STORAGE_ANSWERS       = 'exam_answers_'       + examId;
-const STORAGE_MARKED        = 'exam_marked_'        + examId;
-const STORAGE_END_TIME      = 'exam_end_time_'      + examId;
-const STORAGE_PENDING_CLEAR = 'exam_pending_clear_' + examId;
-const SESSION_RELOAD        = 'exam_reload_'        + examId;
- 
-const answered     = new Set();
-const marked       = new Set();
-let currentQ       = 1;
+const STORAGE_ANSWERS  = 'exam_answers_'  + examId;
+const STORAGE_MARKED   = 'exam_marked_'   + examId;
+const STORAGE_END_TIME = 'exam_end_time_' + examId;
+
+const answered    = new Set();
+const marked      = new Set();
+let currentQ      = 1;
 let timerInterval;
 let autoSubmitting = false;
-let _isSubmitting  = false; // true khi nộp bài hoặc thoát có chủ đích
+let _isSubmitting  = false;
 let _isAutoSubmit  = false;
-// true nếu user đã từng tương tác (kể cả trước reload - kiểm tra qua localStorage)
-let _userActedAfterLoad = (function() {
-    const saved = localStorage.getItem(STORAGE_ANSWERS);
-    if (!saved) return false;
-    try { return Object.keys(JSON.parse(saved)).length > 0; } catch(e) { return false; }
-})();
- 
-// ─── HÀM XÓA DATA ─────────────────────────────────────────────
-function clearExamData() {
-    localStorage.removeItem(STORAGE_ANSWERS);
-    localStorage.removeItem(STORAGE_MARKED);
-    localStorage.removeItem(STORAGE_END_TIME);
-    localStorage.removeItem(STORAGE_PENDING_CLEAR);
-}
- 
-// ─── RELOAD: xử lý flag pending clear ─────────────────────────
-// Khi trang load:
-//   - Nếu có STORAGE_PENDING_CLEAR trong localStorage → đây là lần load SAU KHI đóng tab
-//     (vì nếu là reload, DOMContentLoaded này chính là "lần load lại" → ta xóa flag, giữ data)
-//   - Logic: nếu sessionStorage có SESSION_RELOAD → là reload → xóa pendingClear, giữ examData
-//             nếu không có SESSION_RELOAD → là load mới sau đóng tab → xóa examData
-(function () {
-    const pendingClear = localStorage.getItem(STORAGE_PENDING_CLEAR);
-    if (pendingClear) {
-        if (sessionStorage.getItem(SESSION_RELOAD)) {
-            // Là RELOAD → giữ lại examData, chỉ xóa flag
-            localStorage.removeItem(STORAGE_PENDING_CLEAR);
-            sessionStorage.removeItem(SESSION_RELOAD);
-        } else {
-            // Là load mới sau đóng tab → xóa data
-            clearExamData();
-            localStorage.removeItem(STORAGE_PENDING_CLEAR);
-        }
-    } else {
-        // Không có pendingClear: xóa SESSION_RELOAD nếu còn sót
-        if (sessionStorage.getItem(SESSION_RELOAD)) {
-            sessionStorage.removeItem(SESSION_RELOAD);
-        }
+
+// ── KHỞI TẠO: phân biệt reload vs vào mới ────────────────────
+(function initSession() {
+    const navEntry = performance.getEntriesByType('navigation')[0];
+    const isReload = navEntry && navEntry.type === 'reload';
+    if (!isReload) {
+        sessionStorage.removeItem(STORAGE_ANSWERS);
+        sessionStorage.removeItem(STORAGE_MARKED);
+        sessionStorage.removeItem(STORAGE_END_TIME);
     }
 })();
- 
-// ─── LOCALSTORAGE HELPERS ─────────────────────────────────────
+
+// ── XÓA DATA ─────────────────────────────────────────────────
+function clearExamData() {
+    sessionStorage.removeItem(STORAGE_ANSWERS);
+    sessionStorage.removeItem(STORAGE_MARKED);
+    sessionStorage.removeItem(STORAGE_END_TIME);
+}
+
+// ── LƯU ──────────────────────────────────────────────────────
 function saveAnswers() {
     const data = {};
     document.querySelectorAll('input[type=radio]:checked').forEach(input => {
         data[input.name] = input.value;
     });
-    localStorage.setItem(STORAGE_ANSWERS, JSON.stringify(data));
+    sessionStorage.setItem(STORAGE_ANSWERS, JSON.stringify(data));
 }
- 
+
 function saveMarked() {
-    localStorage.setItem(STORAGE_MARKED, JSON.stringify([...marked]));
+    sessionStorage.setItem(STORAGE_MARKED, JSON.stringify([...marked]));
 }
- 
+
+// ── KHÔI PHỤC ────────────────────────────────────────────────
 function loadSavedState() {
-    // 1. Khôi phục đáp án
-    const savedAnswers = JSON.parse(localStorage.getItem(STORAGE_ANSWERS) || '{}');
+    const savedAnswers = JSON.parse(sessionStorage.getItem(STORAGE_ANSWERS) || '{}');
     Object.entries(savedAnswers).forEach(([name, value]) => {
         const input = document.querySelector(`input[name="${name}"][value="${value}"]`);
         if (!input) return;
         input.checked = true;
-        // Tìm số câu (qNum) từ label cha
         const label = input.closest('.answer-item');
         const qNum  = parseInt(label?.dataset.q);
         if (!qNum) return;
@@ -294,8 +267,7 @@ function loadSavedState() {
     });
     updateAnsweredCount();
 
-    // 2. Khôi phục đánh dấu xem lại
-    const savedMarked = JSON.parse(localStorage.getItem(STORAGE_MARKED) || '[]');
+    const savedMarked = JSON.parse(sessionStorage.getItem(STORAGE_MARKED) || '[]');
     savedMarked.forEach(qNum => {
         marked.add(qNum);
         document.getElementById('mark-' + qNum)?.classList.add('marked');
@@ -306,33 +278,26 @@ function loadSavedState() {
         }
     });
 }
- 
 
-
-// ─── GET END TIME ─────────────────────────────────────────
+// ── TIMER ─────────────────────────────────────────────────────
 function getEndTime() {
-    const saved = localStorage.getItem(STORAGE_END_TIME);
-
+    const saved = sessionStorage.getItem(STORAGE_END_TIME);
     if (saved) {
         const t = parseInt(saved);
-        if (!isNaN(t)) {
-            return t; // ✅ LUÔN dùng lại, kể cả đã hết giờ
+        if (!isNaN(t) && t > Date.now()) {
+            return t;
         }
+        sessionStorage.removeItem(STORAGE_END_TIME);
     }
-
     const newTime = Date.now() + duration * 60 * 1000;
-    localStorage.setItem(STORAGE_END_TIME, newTime);
+    sessionStorage.setItem(STORAGE_END_TIME, newTime);
     return newTime;
 }
 
 const endTime = getEndTime();
 
-
-// ─── TIMER ────────────────────────────────────────────────
-
 function updateTimer() {
     const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
-
     const h = Math.floor(remaining / 3600);
     const m = Math.floor((remaining % 3600) / 60);
     const s = remaining % 60;
@@ -343,52 +308,32 @@ function updateTimer() {
             String(h).padStart(2, '0') + ':' +
             String(m).padStart(2, '0') + ':' +
             String(s).padStart(2, '0');
-
-        // đổi màu khi còn 5 phút
         if (remaining <= 300) {
             display.style.color = '#dc2626';
             display.style.fontWeight = '700';
         }
     }
 
-    // hết giờ → auto submit
     if (remaining <= 0) {
         clearInterval(timerInterval);
-
         if (!autoSubmitting) {
             autoSubmitting = true;
-
-            // ✅ LƯU THỜI ĐIỂM HẾT GIỜ
             window.examExpiredAt = new Date().toISOString();
-
-            localStorage.removeItem(STORAGE_END_TIME);
-
+            sessionStorage.removeItem(STORAGE_END_TIME);
             submitExam(true);
         }
     }
 }
 
-// ─── START TIMER ──────────────────────────────────────────
 timerInterval = setInterval(updateTimer, 1000);
 updateTimer();
 
-// ─── KHI USER SUBMIT THỦ CÔNG ─────────────────────────────
-function handleManualSubmit() {
-    // Xoá thời gian của bài hiện tại
-    localStorage.removeItem(STORAGE_END_TIME);
-
-    // Gọi lại hàm submit cũ của bạn
-    confirmSubmit();
-}
-
- 
-// ─── ANSWER ACTIONS ───────────────────────────────────────────
+// ── ANSWER ACTIONS ────────────────────────────────────────────
 function updateAnsweredCount() {
     document.getElementById('answeredCount').textContent = answered.size + '/' + totalQ;
 }
- 
+
 function selectAnswer(qNum, input) {
-    _userActedAfterLoad = true;
     const block = document.getElementById('q' + qNum);
     block.querySelectorAll('.answer-item').forEach(el => el.classList.remove('selected'));
     input.closest('.answer-item').classList.add('selected');
@@ -399,9 +344,8 @@ function selectAnswer(qNum, input) {
     btn.classList.remove('current', 'marked');
     btn.classList.add('done');
 }
- 
+
 function toggleMark(qNum) {
-    _userActedAfterLoad = true;
     const markBtn  = document.getElementById('mark-' + qNum);
     const sheetBtn = document.getElementById('sheet-' + qNum);
     if (marked.has(qNum)) {
@@ -422,7 +366,6 @@ function toggleMark(qNum) {
     saveMarked();
 }
 
-// Scroll vị trí câu hỏi
 function scrollToQuestion(num) {
     document.querySelectorAll('.sheet-btn').forEach(b => b.classList.remove('current'));
     const btn = document.getElementById('sheet-' + num);
@@ -431,7 +374,6 @@ function scrollToQuestion(num) {
     }
     const el = document.getElementById('q' + num);
     if (el) {
-        // Highlight câu hỏi
         document.querySelectorAll('.question-block').forEach(q => q.classList.remove('highlight-active'));
         el.scrollIntoView({ behavior: 'auto', block: 'center' });
         el.classList.add('highlight-active');
@@ -439,43 +381,31 @@ function scrollToQuestion(num) {
         currentQ = num;
     }
 }
- 
-// ─── MODAL NỘP BÀI ────────────────────────────────────────────
-function submitExam(autoSubmit = false) {
-     // ❗ CHẶN GỌI 2 LẦN
-    if (_isSubmitting) return;
 
+// ── MODAL NỘP BÀI ─────────────────────────────────────────────
+function submitExam(autoSubmit = false) {
+    if (_isSubmitting) return;
     _isAutoSubmit = autoSubmit;
+
     const modal     = document.getElementById('submitModal');
     const title     = document.getElementById('modalTitle');
     const msg       = document.getElementById('modalMsg');
     const cancelBtn = document.getElementById('modalCancelBtn');
-    const confirmBtn = document.getElementById('modalConfirmBtn'); // Nút xác nhận nộp
 
     if (autoSubmit) {
         title.textContent = 'Hết giờ làm bài!';
         cancelBtn.style.display = 'none';
 
         let countdown = 5;
-
-        // ⏱ HIỂN THỊ COUNTDOWN
         msg.textContent = `Bạn đã trả lời ${answered.size}/${totalQ} câu. Hệ thống sẽ tự động nộp bài sau ${countdown} giây...`;
 
         const interval = setInterval(() => {
             countdown--;
-
             msg.textContent = `Bạn đã trả lời ${answered.size}/${totalQ} câu. Hệ thống sẽ tự động nộp bài sau ${countdown} giây...`;
-
-            if (countdown <= 0) {
-                clearInterval(interval);
-            }
+            if (countdown <= 0) clearInterval(interval);
         }, 1000);
 
-        // ⏳ 5 giây sau thì submit
-        setTimeout(() => {
-            confirmSubmit();
-        }, 5000);
-
+        setTimeout(() => confirmSubmit(), 5000);
     } else {
         title.textContent = 'Xác nhận nộp bài';
         msg.textContent   = `Bạn đã trả lời ${answered.size}/${totalQ} câu. Bạn có chắc chắn muốn nộp bài không?`;
@@ -491,31 +421,23 @@ function closeSubmitModal() {
     _isAutoSubmit = false;
 }
 
-function confirmSubmit() {
-    if (_isSubmitting) return; // ❗ chặn double submit
-    
-    // Chặn các sự kiện popstate/beforeunload
-    _isSubmitting = true;
-    
-    // Dừng đếm ngược
-    if (typeof timerInterval !== 'undefined') {
-        clearInterval(timerInterval);
-    }
+function handleManualSubmit() {
+    sessionStorage.removeItem(STORAGE_END_TIME);
+    confirmSubmit();
+}
 
-    // ✅ nếu là auto submit → dùng thời điểm hết giờ
+function confirmSubmit() {
+    if (_isSubmitting) return;
+    _isSubmitting = true;
+    if (typeof timerInterval !== 'undefined') clearInterval(timerInterval);
     if (_isAutoSubmit && window.examExpiredAt) {
         document.getElementById('expiredAt').value = window.examExpiredAt;
     }
-    
-    // Xóa dữ liệu tạm (nếu có)
     clearExamData();
-    
-    // Nộp form
     document.getElementById('examForm').submit();
 }
 
- 
-// ─── TOGGLE SIDEBAR ───────────────────────────────────────────
+// ── TOGGLE SIDEBAR ────────────────────────────────────────────
 function toggleAnswerSheet() {
     const sheet = document.querySelector('.answer-sheet');
     const body  = document.getElementById('answerSheetBody');
@@ -531,23 +453,15 @@ function toggleAnswerSheet() {
         icon.className = 'fa-solid fa-plus';
     }
 }
- 
-// ─── KHỞI TẠO ─────────────────────────────────────────────────
+
+// ── KHỞI TẠO ─────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', loadSavedState);
 history.scrollRestoration = 'manual';
 
-// ─── CHẶN BACK/FORWARD → MODAL THOÁT ─────────────────────────
-// 1. Hàm push state kèm theo vị trí scroll hiện tại
+// ── CHẶN BACK/FORWARD ────────────────────────────────────────
 function pushGuardState() {
-    // Lưu lại vị trí scroll hiện tại vào state để khi popstate xảy ra, 
-    // chúng ta biết chính xác vị trí cần giữ nguyên.
-    history.pushState({ 
-        examGuard: true, 
-        scrollY: window.scrollY 
-    }, '');
+    history.pushState({ examGuard: true, scrollY: window.scrollY }, '');
 }
-
-// Khởi tạo lần đầu
 pushGuardState();
 
 let _modalOpen = false;
@@ -555,50 +469,45 @@ let _modalOpen = false;
 window.addEventListener('popstate', function (e) {
     if (_isSubmitting) return;
 
-    // Lấy lại vị trí scroll từ state ngay khi nhấn back
     const targetScrollY = e.state?.scrollY ?? window.scrollY;
-
-    // QUAN TRỌNG: Đẩy lại state ngay lập tức để "chặn" việc thoát trang
     pushGuardState();
-
-    // Khôi phục lại vị trí scroll cũ ngay lập tức (instant) để tránh bị nhảy lên đầu trang
-    requestAnimationFrame(() => {
-        window.scrollTo(0, targetScrollY);
-    });
+    requestAnimationFrame(() => window.scrollTo(0, targetScrollY));
 
     if (_modalOpen) return;
 
-    // Xử lý logic thoát nhanh nếu chưa tương tác
-    if (!_userActedAfterLoad) {
+    // Đọc thẳng từ sessionStorage, không phụ thuộc DOMContentLoaded
+    let hasAnswers = answered.size > 0 || marked.size > 0;
+    if (!hasAnswers) {
+        try {
+            const sa = sessionStorage.getItem(STORAGE_ANSWERS);
+            const sm = sessionStorage.getItem(STORAGE_MARKED);
+            if (sa && Object.keys(JSON.parse(sa)).length > 0) hasAnswers = true;
+            if (sm && JSON.parse(sm).length > 0) hasAnswers = true;
+        } catch(e) {}
+    }
+
+    if (!hasAnswers) {
+        // Chưa làm gì → thoát thẳng
         clearExamData();
-        sessionStorage.removeItem(SESSION_RELOAD);
-        _isSubmitting = true; 
-        history.go(-2); 
+        _isSubmitting = true;
+        history.go(-2);
         return;
     }
 
-    // Hiển thị Modal tại chỗ
+    // Có đáp án → hỏi xác nhận
     _modalOpen = true;
-    const modal = document.getElementById('exitModal');
-    if (modal) {
-        modal.classList.add('is-open');
-    }
+    document.getElementById('exitModal')?.classList.add('is-open');
 });
 
-// 2. CẬP NHẬT STATE KHI SCROLL
-// Cập nhật lại state liên tục khi user scroll để nếu họ nhấn back, 
-// vị trí lưu trữ luôn là vị trí mới nhất.
 let scrollTimeout;
-window.addEventListener('scroll', function() {
+window.addEventListener('scroll', function () {
     clearTimeout(scrollTimeout);
     scrollTimeout = setTimeout(() => {
         if (!_modalOpen) {
-            // Thay thế state hiện tại bằng tọa độ mới nhất mà không tạo thêm lịch sử
             history.replaceState({ examGuard: true, scrollY: window.scrollY }, '');
         }
-    }, 100); // debounce 100ms để tránh ghi đè liên tục gây lag
+    }, 100);
 });
-
 
 document.getElementById('exitCancelBtn').addEventListener('click', function () {
     document.getElementById('exitModal').classList.remove('is-open');
@@ -607,34 +516,20 @@ document.getElementById('exitCancelBtn').addEventListener('click', function () {
 
 document.getElementById('exitConfirmBtn').addEventListener('click', function () {
     clearExamData();
-    sessionStorage.removeItem(SESSION_RELOAD);
-    _isSubmitting = true;   // tắt beforeunload
-    history.go(-2);         // -1 cho pushState giả + -1 để back thật
+    _isSubmitting = true;
+    history.go(-2);
 });
 
-// ─── CHẶN ĐÓNG TAB / NAVIGATE ─────────────────────────────────
+// ── CẢNH BÁO KHI THOÁT ───────────────────────────────────────
 window.addEventListener('beforeunload', function (e) {
     if (_isSubmitting) return;
-    sessionStorage.setItem(SESSION_RELOAD, '1');
     e.preventDefault();
     e.returnValue = '';
 });
 
-window.addEventListener('pagehide', function (e) {
-    if (_isSubmitting || e.persisted) return;
-    // Đánh dấu "cần xóa data" vào localStorage
-    // Nếu trang load lại (reload) → DOMContentLoaded sẽ xóa flag này (giữ lại examData)
-    // Nếu tab đóng thật → flag còn trong localStorage → lần sau vào trang sẽ xóa examData
-    localStorage.setItem(STORAGE_PENDING_CLEAR, '1');
-    if (typeof timerInterval !== 'undefined') clearInterval(timerInterval);
-});
- 
- 
-
-
-// ─── KIỂM TRA ĐỀ THI CÒN TỒN TẠI ─────────────────────────────
+// ── KIỂM TRA ĐỀ THI CÒN TỒN TẠI ─────────────────────────────
 (function checkExamAlive() {
-    const CHECK_INTERVAL = 30 * 1000;
+    const CHECK_INTERVAL = 15 * 1000;
 
     async function ping() {
         if (_isSubmitting) return;
@@ -649,35 +544,27 @@ window.addEventListener('pagehide', function (e) {
         } catch (e) {}
     }
 
-    ping(); // ← Gọi ngay khi load
+    ping();
     setInterval(ping, CHECK_INTERVAL);
 })();
 
-
-
 function showExamDeletedModal() {
-    // Tái dụng submitModal đang có sẵn
-    const modal     = document.getElementById('submitModal');
-    const title     = document.getElementById('modalTitle');
-    const msg       = document.getElementById('modalMsg');
-    const cancelBtn = document.getElementById('modalCancelBtn');
+    const modal      = document.getElementById('submitModal');
+    const title      = document.getElementById('modalTitle');
+    const msg        = document.getElementById('modalMsg');
+    const cancelBtn  = document.getElementById('modalCancelBtn');
     const confirmBtn = document.getElementById('modalConfirmBtn');
 
     title.textContent = 'Đề thi không còn tồn tại';
-    msg.textContent   = 'Đề thi này đã bị xóa. Kết quả của bạn không thể lưu được. Vui lòng quay về trang chủ.';
-
+    msg.textContent   = 'Đề thi này không còn tồn tại trên hệ thống. Kết quả của bạn không được lưu!';
     cancelBtn.style.display = 'none';
-
     confirmBtn.textContent  = 'Về trang chủ';
     confirmBtn.onclick = function () {
         _isSubmitting = true;
         clearExamData();
-        sessionStorage.removeItem(SESSION_RELOAD);
         setTimeout(() => { window.location.href = '/'; }, 0);
     };
 
     modal.classList.add('is-open');
 }
-
-
 </script>

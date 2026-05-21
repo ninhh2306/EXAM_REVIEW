@@ -68,11 +68,23 @@ class Chapter extends Model
 
     public function getAll()
     {
-        $sql = "SELECT c.*, s.subjectName, g.gradeId, g.gradeName
-                FROM chapters c
-                JOIN subjects s ON c.subjectId = s.subjectId
-                JOIN grades g ON s.gradeId = g.gradeId
-                ORDER BY c.subjectId ASC, c.sortOrder ASC";
+        $sql = "
+            SELECT 
+                c.*, 
+                s.subjectName, 
+                g.gradeId, 
+                g.gradeName
+
+            FROM chapters c
+
+            JOIN subjects s 
+                ON c.subjectId = s.subjectId
+
+            JOIN grades g 
+                ON s.gradeId = g.gradeId
+
+            ORDER BY c.chapterId DESC
+        ";
 
         return $this->fetchAll($sql);
     }

@@ -48,7 +48,7 @@ class Grade extends Model
 
     public function getAll()
     {
-        $sql = "SELECT * FROM grades ORDER BY gradeId ASC";
+        $sql = "SELECT * FROM grades ORDER BY gradeId DESC";
         return $this->fetchAll($sql);
         
     }

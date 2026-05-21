@@ -87,8 +87,8 @@ $d = !empty($flashOld) ? $flashOld : $lesson;
                 <div class="lesson-group">
                     <label>Vị trí hiển thị</label>
                     <select name="positionValue" id="lessonPositionSelect">
-                        <option value="last">Hiển thị cuối cùng</option>
                         <option value="first">Hiển thị đầu tiên</option>
+                        <option value="last">Hiển thị cuối cùng</option>
                     </select>
                 </div>
 
@@ -168,8 +168,8 @@ function loadLessonPositionsForEdit(chapterId, currentId, currentSortOrder) {
     $.get('/admin/ajax/lessons-by-chapter?chapter_id=' + chapterId, function (data) {
 
         let html = `
-            <option value="last">Hiển thị cuối cùng</option>
             <option value="first">Hiển thị đầu tiên</option>
+            <option value="last">Hiển thị cuối cùng</option> 
         `;
 
         let selectedVal = 'last';

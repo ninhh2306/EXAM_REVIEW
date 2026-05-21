@@ -110,7 +110,7 @@ class SubjectController extends Controller
 
         $this->viewAdmin("subjects/create", [
             "title"      => "Thêm môn học",
-            "grades"     => $gradeModel->getAll(),
+            "grades"     => $gradeModel->getAllAsc(),
             "flashError" => $flashError,
             "flashOld"   => $flashOld,
         ]);

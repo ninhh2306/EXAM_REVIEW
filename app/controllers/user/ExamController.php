@@ -21,9 +21,9 @@ class ExamController extends Controller
         $chapterModel = new Chapter();
 
         $grade   = $gradeModel->getBySlug($gradeSlug);
-        $subject = $subjectModel->getBySlugAndGrade($subjectSlug, $grade['gradeId']); // fix: dùng getBySlugAndGrade
+        $subject = $subjectModel->getBySlugAndGrade($subjectSlug, $grade['gradeId']); 
 
-        // fix: truyền thêm gradeId để lọc đúng môn + loại trừ thpt
+        // ọc đúng môn + loại trừ thpt
         $exams    = $examModel->getBySubjectSlug($subjectSlug, $grade['gradeId']);
         $chapters = $chapterModel->getBySubject($subject['subjectId']);
 
@@ -34,7 +34,7 @@ class ExamController extends Controller
 
 
     // Chi tiết 1 đề thi theo slug
-    public function show($gradeSlug, $subjectSlug, $examSlug)
+    public function show($gradeSlug, $subjectSlug, $_examSlug, $examId)
     {
         if (empty($_SESSION['user_id'])) {
             header('Location: ' . APP_URL . '/login');
@@ -52,11 +52,9 @@ class ExamController extends Controller
         $subject = $subjectModel->getBySlugAndGrade($subjectSlug, $grade['gradeId']);
         if (!$subject) { $this->view('errors/404'); return; }
 
-        $exam = $examModel->getBySlug($examSlug, $subject['subjectId']);
+        $exam = $examModel->getByIdAndSubject((int)$examId, $subject['subjectId']);
 
-        if (!$exam) {$this->view('errors/404');
-            return;
-        }
+        if (!$exam) { $this->view('errors/404'); return; }
 
         $_SESSION['exam_start_' . $exam['examId']] = date('Y-m-d H:i:s');
 
@@ -392,7 +390,7 @@ class ExamController extends Controller
             'questionOrder'        => 'random',
             'isPublic'             => 0,
             'isTemporary'          => 1,
-            'isActive'             => 0,   // ← thêm dòng này
+            'isActive'             => 0,   
             'createdBy'            => $_SESSION['user_id'],
         ]);
 
@@ -481,14 +479,22 @@ class ExamController extends Controller
         $examModel = new Exam();
         $exam      = $examModel->getById($examId);
 
+        if (empty($exam)) {
+            header('Content-Type: application/json');
+            echo json_encode(['exists' => false]);
+            exit;
+        }
+
+        if ($exam['examType'] === 'random') {
+            // Đang làm lần đầu (chưa nộp) → bỏ qua check
+            $exists = (int)($exam['playCount'] ?? 0) === 0
+                || (int)($exam['isActive']  ?? 0) === 1;
+        } else {
+            $exists = (int)($exam['isActive'] ?? 0) === 1;
+        }
+
         header('Content-Type: application/json');
-        echo json_encode([
-            'exists' => !empty($exam) && (
-                $exam['examType'] === 'random'
-                    ? true                            
-                    : (int)($exam['isActive'] ?? 0) === 1  
-            )
-        ]);
+        echo json_encode(['exists' => $exists]);
         exit;
     }
 

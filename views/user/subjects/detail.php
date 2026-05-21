@@ -81,7 +81,7 @@ CONTENT LIST
 
             <div class="content-block__body">
                 <?php if(empty($lessons)): ?>
-                    <p class="content-block__empty">Chưa có bài học.</p>
+                    <p class="content-block__empty">Môn học này chưa có bài học</p>
                 <?php else: ?>
                     <ul class="content-block__list">
                         <?php foreach(array_slice($lessons, 0, 6) as $lesson): ?>
@@ -120,7 +120,7 @@ CONTENT LIST
                                     ▶ <?= $exam['title'] ?>
                                 </a>
                             <?php else: ?>
-                                <a href="<?= $base ?>/<?= $grade['slug'] ?>/<?= $subject['slug'] ?>/trac-nghiem/<?= $exam['slug'] ?>">
+                                <a href="<?= $base ?>/<?= $grade['slug'] ?>/<?= $subject['slug'] ?>/trac-nghiem/<?= $exam['slug'] ?>-<?= $exam['examId'] ?>">
                                     ▶ <?= $exam['title'] ?>
                                 </a>
                             <?php endif; ?>

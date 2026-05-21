@@ -11,7 +11,7 @@ class Subject extends Model
             SELECT *
             FROM subjects
             WHERE gradeId = ?
-            ORDER BY subjectName ASC
+            ORDER BY subjectName DESC
         ";
 
         return $this->fetchAll($sql, [$gradeId]);

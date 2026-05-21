@@ -16,7 +16,7 @@ class ChapterController extends Controller
 
         $allChapters = $chapterModel->getAll();
         $subjects    = $subjectModel->getAll();
-        $grades      = $gradeModel->getAll();
+        $grades = $gradeModel->all();
 
         $perTab     = 5;
         $total      = count($allChapters);

@@ -30,12 +30,6 @@ class UserController extends Controller
             return 'Tên không được vượt quá 50 ký tự!';
         }
 
-        // Ký tự hợp lệ
-        // Cho phép:
-        // - chữ tiếng Việt
-        // - khoảng trắng
-        // - dấu '
-        // - dấu -
         if (!preg_match("/^[\p{L}\s'-]+$/u", $name)) {
             return 'Tên chứa ký tự không hợp lệ!';
         }
@@ -52,7 +46,7 @@ class UserController extends Controller
 
         $allUsers = $userModel->getAll();
 
-        $perTab     = 5;
+        $perTab     = 10;
         $total      = count($allUsers);
         $tabCount   = max(1, ceil($total / $perTab));
         $currentTab = max(1, min($tabCount, (int)($_GET['tab'] ?? 1)));

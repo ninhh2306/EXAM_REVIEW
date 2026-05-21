@@ -101,8 +101,8 @@
 
                             <?php else: ?>
 
-                                <a href="/<?= $grade['slug'] ?>/<?= $subject['slug'] ?>/trac-nghiem/<?= $exam['slug'] ?>"
-                                   class="index-card__btn index-card__btn--green">
+                                <a href="/<?= $grade['slug'] ?>/<?= $subject['slug'] ?>/trac-nghiem/<?= $exam['slug'] ?>-<?= $exam['examId'] ?>"
+                                    class="index-card__btn index-card__btn--green">
                                     <i class="fa-solid fa-pen-to-square"></i> Làm đề
                                 </a>
 
@@ -144,8 +144,8 @@
 
                     <?php else: ?>
 
-                        <a href="/<?= $grade['slug'] ?>/<?= $subject['slug'] ?>/trac-nghiem/<?= $exam['slug'] ?>"
-                           class="index-card__btn index-card__btn--green">
+                        <a href="/<?= $grade['slug'] ?>/<?= $subject['slug'] ?>/trac-nghiem/<?= $exam['slug'] ?>-<?= $exam['examId'] ?>"
+                            class="index-card__btn index-card__btn--green">
                             <i class="fa-solid fa-pen-to-square"></i> Làm đề
                         </a>
 
