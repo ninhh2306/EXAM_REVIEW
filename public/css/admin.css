@@ -225,22 +225,252 @@ h4, .h4 {
 }
 
 
-/*  QUESTION  */
-.exam-table td:nth-child(4),
-.question-table td:nth-child(4),
-.question-table td:nth-child(4) div,
-.question-table td:nth-child(4) small {
-    max-width: 220px !important;
-    white-space: normal !important;
-    word-break: break-word !important;
-    text-overflow: unset !important; 
-    overflow: visible !important;   
+/* ============= LESSON TABLE ============ */
+
+.lesson-table {
+    width: 100% !important;
+    table-layout: fixed !important;
+    border-collapse: collapse;
+    min-width: unset !important;
 }
 
-.exam-table td:nth-child(11) {
+.lesson-table th,
+.lesson-table td {
+    vertical-align: middle;
+    padding: 12px 8px;
+    overflow: hidden;
+}
+
+.lesson-table th {
     white-space: nowrap;
 }
 
+/* Cột ID */
+.lesson-table th:nth-child(1),
+.lesson-table td:nth-child(1) {
+    width: 4%;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* Khối lớp */
+.lesson-table th:nth-child(2),
+.lesson-table td:nth-child(2) {
+    width: 7%;
+    white-space: nowrap;
+}
+
+/* Môn học */
+.lesson-table th:nth-child(3),
+.lesson-table td:nth-child(3) {
+    width: 7%;
+    white-space: nowrap;
+}
+
+/* Chương học - xuống dòng */
+.lesson-table th:nth-child(4),
+.lesson-table td:nth-child(4) {
+    width: 19%;
+    white-space: normal;
+    word-break: break-word;
+}
+
+/* Bài học - xuống dòng */
+.lesson-table th:nth-child(5),
+.lesson-table td:nth-child(5) {
+    width: 25%;
+    white-space: normal;
+    word-break: break-word;
+}
+
+/* Slug - cắt ... */
+.lesson-table th:nth-child(6),
+.lesson-table td:nth-child(6) {
+    width: 21%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 0;
+}
+
+/* Trạng thái */
+.lesson-table th:nth-child(7),
+.lesson-table td:nth-child(7) {
+    width: 7%;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* Hành động - đảm bảo hiện đủ 2 nút */
+.lesson-table th:last-child,
+.lesson-table td:last-child {
+    width: 10%;
+    text-align: center;
+    white-space: nowrap;
+    overflow: visible;
+}
+
+
+/* ============= QUESTION TABLE ============ */
+
+.question-table {
+    width: 100% !important;
+    table-layout: fixed !important;
+    border-collapse: collapse;
+    min-width: unset !important;
+}
+
+.question-table th,
+.question-table td {
+    vertical-align: middle;
+    padding: 10px 8px;
+    overflow: hidden;
+}
+
+.question-table th {
+    white-space: nowrap;
+}
+
+/* ID */
+.question-table th:nth-child(1),
+.question-table td:nth-child(1) {
+    width: 4%;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* Câu hỏi - xuống dòng, không lấn */
+.question-table th:nth-child(2),
+.question-table td:nth-child(2) {
+    width: 22%;
+    white-space: normal;
+    word-break: break-word;
+}
+
+/* Môn học */
+.question-table th:nth-child(3),
+.question-table td:nth-child(3) {
+    width: 10%;
+    white-space: normal;
+    word-break: break-word;
+}
+
+/* Chương / Bài học - xuống dòng */
+.question-table th:nth-child(4),
+.question-table td:nth-child(4) {
+    width: 20%;
+    white-space: normal !important;
+    word-break: normal !important;        
+    overflow-wrap: break-word !important; 
+    word-wrap: break-word !important;
+    overflow: hidden;
+}
+
+.question-table td:nth-child(4) div,
+.question-table td:nth-child(4) small {
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+    word-wrap: break-word !important;
+    max-width: unset !important;
+    overflow: visible !important;
+    display: block;
+}
+
+/* Mức độ */
+.question-table th:nth-child(5),
+.question-table td:nth-child(5) {
+    width: 9%;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* Loại câu hỏi */
+.question-table th:nth-child(6),
+.question-table td:nth-child(6) {
+    width: 8%;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* Cách tạo */
+.question-table th:nth-child(7),
+.question-table td:nth-child(7) {
+    width: 8%;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* Ngày tạo */
+.question-table th:nth-child(8),
+.question-table td:nth-child(8) {
+    width: 9%;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* Hành động */
+.question-table th:last-child,
+.question-table td:last-child {
+    width: 10%;
+    text-align: center;
+    white-space: nowrap;
+    overflow: visible;
+}
+
+/* Tab pagination gọn */
+.tab-pagination {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;        /* Không xuống dòng */
+    gap: 4px;
+    justify-content: center;
+}
+
+.tab-btn {
+    min-width: 34px;
+    height: 34px;
+    padding: 0 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+    background: #fff;
+    color: #495057;
+    font-size: 14px;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: 0.15s;
+}
+
+.tab-btn:hover {
+    background: #e9ecef;
+}
+
+.tab-btn.active {
+    background: #4e6ef2;
+    color: #fff;
+    border-color: #4e6ef2;
+    font-weight: 600;
+}
+
+.tab-btn.disabled {
+    pointer-events: none;
+    opacity: 0.35;
+}
+
+.tab-btn.tab-nav {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.tab-ellipsis {
+    padding: 0 4px;
+    color: #adb5bd;
+    font-size: 14px;
+    user-select: none;
+}
 
 /* ============= EXAM TABLE ============ */
 
@@ -285,6 +515,14 @@ h4, .h4 {
     width: 10% !important;
     white-space: nowrap !important;
     text-align: center;
+}
+
+.exam-table td:nth-child(2) .text-muted.small {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    display: block !important;
+    max-width: 100% !important;
 }
 
 .exam-table td:nth-child(4) {

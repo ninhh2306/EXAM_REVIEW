@@ -181,20 +181,19 @@ $base = $base ?? '/EXAM_REVIEW';
 
 
 
-<?php if (!empty($_GET['error'])): ?>
 <?php
-    $errorMessages = [
-        'exam_deleted' => 'Đề thi này đã bị xóa khỏi hệ thống. Kết quả của bạn không được lưu!.',
-    ];
-    $errorMsg = $errorMessages[htmlspecialchars($_GET['error'])] ?? null;
+$flashError = $_SESSION['flash_error'] ?? $_GET['error'] ?? null;
+unset($_SESSION['flash_error']);
+$errorMessages = [
+    'exam_deleted' => 'Đề thi này đã bị xóa khỏi hệ thống. Kết quả của bạn không được lưu!',
+];
+$errorMsg = $flashError ? ($errorMessages[$flashError] ?? null) : null;
 ?>
 <?php if ($errorMsg): ?>
 <div id="flashToast" class="flash-toast flash-toast--error">
     <i class="fa-solid fa-circle-exclamation"></i>
     <?= $errorMsg ?>
 </div>
-
-
 <script>
     setTimeout(function () {
         const toast = document.getElementById('flashToast');
@@ -205,7 +204,9 @@ $base = $base ?? '/EXAM_REVIEW';
     }, 4000);
 </script>
 <?php endif; ?>
-<?php endif; ?>
+
+
+
 
 <script>
 

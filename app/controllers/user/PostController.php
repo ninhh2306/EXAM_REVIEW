@@ -42,31 +42,22 @@ class PostController extends Controller
     {
         $postModel = new Post();
 
-        // lấy bài viết
-        $post = $postModel->getBySlug($postSlug);
+        // Lấy bài viết theo cả slug bài VÀ slug category
+        $post = $postModel->getBySlugAndCategory($postSlug, $categorySlug);
 
         if (!$post) {
-            die("Post not found");
+            $this->view('errors/404');
+            return;
         }
 
-        // kiểm tra category
-        if ($post['categorySlug'] !== $categorySlug) {
-            die("Category not match");
-        }
+        // Không cần check category nữa vì đã lọc trong query
 
-        // bài viết liên quan
-        $relatedPosts = $postModel->getRelated(
-            $post['categoryId'],
-            $post['postId'],
-            4
-        );
+        $relatedPosts = $postModel->getRelated($post['categoryId'], $post['postId'], 4);
 
-        // AUTHOR
         $author = [
             'fullName' => $post['authorName'] ?? 'Admin',
             'avatar'   => $post['authorAvatar'] ?? null
         ];
-
 
         $this->view("posts/detail", [
             "post"         => $post,
@@ -74,4 +65,6 @@ class PostController extends Controller
             "author"       => $author
         ]);
     }
+
+
 }

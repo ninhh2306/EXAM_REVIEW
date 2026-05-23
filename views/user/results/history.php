@@ -61,7 +61,7 @@ HISTORY HERO
 
             <div class="history-box avg">
                 <span>Điểm trung bình</span>
-                <h3><?= number_format($summary['avgScore'],1) ?></h3>
+                <h3><?= number_format($summary['avgScore'] ?? 0, 1) ?></h3>
             </div>
 
         </div>

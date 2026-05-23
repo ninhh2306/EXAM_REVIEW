@@ -226,42 +226,76 @@
 
     <!-- PAGINATION -->
     <?php if ($tabCount > 1): ?>
-
         <?php $baseUrl = '/admin/questions'; ?>
 
-        <div class="tab-pagination-wrapper"
-             id="questionPagination">
-
+        <div class="tab-pagination-wrapper" id="questionPagination">
             <div class="tab-pagination">
 
-                <?php for ($i = 1; $i <= $tabCount; $i++): ?>
+                <?php
+                    // Nút PREV
+                    $prevParams = $_GET;
+                    $prevParams['tab'] = max(1, $currentTab - 1);
+                    unset($prevParams['success'], $prevParams['error']);
+                    $prevUrl = $baseUrl . '?' . http_build_query($prevParams);
+                ?>
+                <a href="<?= $prevUrl ?>"
+                class="tab-btn tab-nav <?= $currentTab === 1 ? 'disabled' : '' ?>">
+                    ‹
+                </a>
 
-                    <?php
+                <?php
+                    // Hiển thị tối đa 5 tab quanh tab hiện tại
+                    $range  = 2;
+                    $start  = max(1, $currentTab - $range);
+                    $end    = min($tabCount, $currentTab + $range);
 
-                        $params = $_GET;
+                    // Luôn hiện tab 1
+                    if ($start > 1):
+                        $p = $_GET; $p['tab'] = 1; unset($p['success'], $p['error']);
+                ?>
+                    <a href="<?= $baseUrl . '?' . http_build_query($p) ?>"
+                    class="tab-btn">1</a>
+                    <?php if ($start > 2): ?>
+                        <span class="tab-ellipsis">…</span>
+                    <?php endif; ?>
+                <?php endif; ?>
 
-                        $params['tab'] = $i;
-
-                        unset($params['success']);
-                        unset($params['error']);
-
-                        $url = $baseUrl . '?' . http_build_query($params);
-
-                    ?>
-
+                <?php for ($i = $start; $i <= $end; $i++):
+                    $p = $_GET; $p['tab'] = $i; unset($p['success'], $p['error']);
+                    $url = $baseUrl . '?' . http_build_query($p);
+                ?>
                     <a href="<?= $url ?>"
-                       class="tab-btn <?= $i === $currentTab ? 'active' : '' ?>">
-
-                        Tab <?= $i ?>
-
+                    class="tab-btn <?= $i === $currentTab ? 'active' : '' ?>">
+                        <?= $i ?>
                     </a>
-
                 <?php endfor; ?>
 
+                <?php
+                    // Luôn hiện tab cuối
+                    if ($end < $tabCount):
+                        $p = $_GET; $p['tab'] = $tabCount; unset($p['success'], $p['error']);
+                ?>
+                    <?php if ($end < $tabCount - 1): ?>
+                        <span class="tab-ellipsis">…</span>
+                    <?php endif; ?>
+                    <a href="<?= $baseUrl . '?' . http_build_query($p) ?>"
+                    class="tab-btn"><?= $tabCount ?></a>
+                <?php endif; ?>
+
+                <?php
+                    // Nút NEXT
+                    $nextParams = $_GET;
+                    $nextParams['tab'] = min($tabCount, $currentTab + 1);
+                    unset($nextParams['success'], $nextParams['error']);
+                    $nextUrl = $baseUrl . '?' . http_build_query($nextParams);
+                ?>
+                <a href="<?= $nextUrl ?>"
+                class="tab-btn tab-nav <?= $currentTab === $tabCount ? 'disabled' : '' ?>">
+                    ›
+                </a>
+
             </div>
-
         </div>
-
     <?php endif; ?>
 
 </div>

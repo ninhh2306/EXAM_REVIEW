@@ -32,7 +32,8 @@ class ResultController extends Controller
         $exam = $examModel->getById($result['examId']);
 
         if (!$exam || !$exam['isActive']) {
-            $this->view('errors/404');
+            $_SESSION['flash_error'] = 'exam_deleted';  // ← thêm dòng này
+            $this->view('errors/404');                  // ← giữ nguyên, KHÔNG redirect
             return;
         }
 
@@ -96,7 +97,8 @@ class ResultController extends Controller
         $exam = $examModel->getById($result['examId']);
         
         if (!$exam || !$exam['isActive']) {
-            $this->view('errors/404');
+            $_SESSION['flash_error'] = 'exam_deleted';  // ← thêm dòng này
+            $this->view('errors/404');                  // ← giữ nguyên, KHÔNG redirect
             return;
         }
 

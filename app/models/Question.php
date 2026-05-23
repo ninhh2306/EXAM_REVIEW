@@ -94,6 +94,26 @@ class Question extends Model
         return $question;
     }
 
+
+    public function getByIds(array $ids)
+    {
+        if (empty($ids)) return [];
+
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $idList       = implode(',', array_map('intval', $ids));
+
+        $sql = "
+            SELECT *
+            FROM questions
+            WHERE questionId IN ({$placeholders})
+            ORDER BY FIELD(questionId, {$idList})
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(array_map('intval', $ids));
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     // =====================================================
     // CREATE QUESTION + ANSWERS
     // =====================================================

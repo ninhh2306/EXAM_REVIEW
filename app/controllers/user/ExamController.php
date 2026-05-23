@@ -23,7 +23,7 @@ class ExamController extends Controller
         $grade   = $gradeModel->getBySlug($gradeSlug);
         $subject = $subjectModel->getBySlugAndGrade($subjectSlug, $grade['gradeId']); 
 
-        // ọc đúng môn + loại trừ thpt
+        // lọc đúng môn + loại trừ thpt
         $exams    = $examModel->getBySubjectSlug($subjectSlug, $grade['gradeId']);
         $chapters = $chapterModel->getBySubject($subject['subjectId']);
 
@@ -53,13 +53,16 @@ class ExamController extends Controller
         if (!$subject) { $this->view('errors/404'); return; }
 
         $exam = $examModel->getByIdAndSubject((int)$examId, $subject['subjectId']);
-
         if (!$exam) { $this->view('errors/404'); return; }
 
         $_SESSION['exam_start_' . $exam['examId']] = date('Y-m-d H:i:s');
 
         $questions = $questionModel->getByExamWithAnswers($exam['examId']);
         $exam['realTotalQuestions'] = count($questions);
+
+        // Snapshot questionIds tại thời điểm bắt đầu làm bài
+        // submit() sẽ chấm đúng theo danh sách này dù admin có sửa đề sau đó
+        $_SESSION['exam_question_ids_' . $exam['examId']] = array_column($questions, 'questionId');
 
         $this->view('exams/detail', compact('grade', 'subject', 'exam', 'questions'));
     }
@@ -78,7 +81,7 @@ class ExamController extends Controller
         $userId  = (int)($_SESSION['user_id'] ?? 0);
 
         $examModel     = new Exam();
-        $questionModel = new Question();  
+        $questionModel = new Question();
         $answerModel   = new Answer();
 
         $exam = $examModel->getById($examId);
@@ -94,8 +97,17 @@ class ExamController extends Controller
             exit;
         }
 
-        // Kiểm tra câu hỏi còn không
-        $allQuestions = $questionModel->getByExam($examId);
+        // Lấy danh sách câu hỏi theo snapshot lúc bắt đầu làm bài
+        // Nếu admin sửa đề sau khi user đã vào làm → vẫn chấm đúng theo câu hỏi cũ
+        // Nếu không có snapshot (trường hợp bất thường) → fallback lấy câu hỏi hiện tại
+        $snapshotIds = $_SESSION['exam_question_ids_' . $examId] ?? null;
+
+        if (!empty($snapshotIds)) {
+            $allQuestions = $questionModel->getByIds($snapshotIds);
+        } else {
+            $allQuestions = $questionModel->getByExam($examId);
+        }
+
         if (empty($allQuestions)) {
             $referer = $_SERVER['HTTP_REFERER'] ?? APP_URL . '/';
             $sep = str_contains($referer, '?') ? '&' : '?';
@@ -106,17 +118,10 @@ class ExamController extends Controller
         $subjectId      = $exam['subjectId'];
         $totalQuestions = count($allQuestions);
 
-        // Chấm điểm
-        $answerModel   = new Answer();
-        $questionModel = new Question();
-
-        $totalQuestions = count($allQuestions);
-
         $totalCorrect         = 0;
         $correctKnowledge     = 0;
         $correctComprehension = 0;
         $correctApplication   = 0;
-
         $totalKnowledge       = 0;
         $totalComprehension   = 0;
         $totalApplication     = 0;
@@ -124,10 +129,9 @@ class ExamController extends Controller
         $details = [];
 
         foreach ($allQuestions as $q) {
-            $questionId       = (int) $q['questionId'];
+            $questionId       = (int)$q['questionId'];
             $selectedAnswerId = isset($answers[$questionId]) ? (int)$answers[$questionId] : null;
 
-            // Đếm tổng câu theo level
             switch ($q['level']) {
                 case 'knowledge':     $totalKnowledge++;     break;
                 case 'comprehension': $totalComprehension++; break;
@@ -143,7 +147,6 @@ class ExamController extends Controller
 
             if ($isCorrect) {
                 $totalCorrect++;
-                // Đếm câu đúng theo level
                 switch ($q['level']) {
                     case 'knowledge':     $correctKnowledge++;     break;
                     case 'comprehension': $correctComprehension++; break;
@@ -157,7 +160,6 @@ class ExamController extends Controller
                 'isCorrect'        => (int)$isCorrect,
             ];
         }
-        
 
         $score = $totalQuestions > 0
             ? round(($totalCorrect / $totalQuestions) * 10, 2)
@@ -165,15 +167,12 @@ class ExamController extends Controller
 
         $startTime = $_SESSION['exam_start_' . $examId] ?? date('Y-m-d H:i:s');
 
-        if (!empty($_POST['expiredAt'])) {
-            $endTime = date('Y-m-d H:i:s', strtotime($_POST['expiredAt']));
-        } else {
-            $endTime = date('Y-m-d H:i:s');
-        }
+        $endTime = !empty($_POST['expiredAt'])
+            ? date('Y-m-d H:i:s', strtotime($_POST['expiredAt']))
+            : date('Y-m-d H:i:s');
 
-        // Lưu kết quả
         $resultModel = new Result();
-        $resultId = $resultModel->create([
+        $resultId    = $resultModel->create([
             'examId'               => $examId,
             'subjectId'            => $subjectId,
             'userId'               => $userId,
@@ -190,7 +189,6 @@ class ExamController extends Controller
             'endTime'              => $endTime,
         ]);
 
-        // Lưu chi tiết
         $resultDetailModel = new ResultDetail();
         foreach ($details as $d) {
             $resultDetailModel->create([
@@ -208,7 +206,11 @@ class ExamController extends Controller
             $examModel->increaseViewCount($examId);
         }
 
-        unset($_SESSION['exam_start_' . $examId]);
+        // Dọn session
+        unset(
+            $_SESSION['exam_start_' . $examId],
+            $_SESSION['exam_question_ids_' . $examId]
+        );
 
         header("Location: " . APP_URL . "/ket-qua/{$exam['slug']}-{$resultId}");
         exit;

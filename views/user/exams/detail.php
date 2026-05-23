@@ -529,7 +529,7 @@ window.addEventListener('beforeunload', function (e) {
 
 // ── KIỂM TRA ĐỀ THI CÒN TỒN TẠI ─────────────────────────────
 (function checkExamAlive() {
-    const CHECK_INTERVAL = 15 * 1000;
+    const CHECK_INTERVAL = 10 * 1000;
 
     async function ping() {
         if (_isSubmitting) return;
@@ -567,4 +567,6 @@ function showExamDeletedModal() {
 
     modal.classList.add('is-open');
 }
+
+
 </script>

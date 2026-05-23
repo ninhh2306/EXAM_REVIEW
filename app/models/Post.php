@@ -31,6 +31,27 @@ class Post extends Model
         return $this->fetchAll($sql);
     }
 
+
+    public function getBySlugAndCategory($slug, $categorySlug)
+    {
+        $sql = "
+            SELECT 
+                p.*,
+                c.categoryName,
+                c.slug as categorySlug,
+                u.fullName as authorName,
+                u.avatar as authorAvatar
+            FROM posts p
+            JOIN category c ON p.categoryId = c.categoryId
+            LEFT JOIN users u ON p.createdBy = u.userId
+            WHERE p.slug = ?
+            AND c.slug = ?
+            AND p.isActive = 1
+        ";
+
+        return $this->fetch($sql, [$slug, $categorySlug]);
+    }
+
     // Lấy chi tiết bài
     public function getBySlug($slug)
     {

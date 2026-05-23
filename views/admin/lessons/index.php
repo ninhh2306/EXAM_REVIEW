@@ -54,7 +54,7 @@
     </div>
 
     <!-- TABLE -->
-    <table class="admin-table">
+    <table class="admin-table lesson-table">
 
         <thead>
             <tr>

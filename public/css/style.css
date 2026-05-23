@@ -42,8 +42,10 @@
     RESPONSIVE
    ============================================= */
 
-html, body {
-    overflow-x: hidden;
+html {
+    overflow-x: clip;  
+}
+body {
     max-width: 100%;
 }
 
@@ -2343,7 +2345,7 @@ WHY SECTION
 }
 
 .index-card__body {
-    padding: 16px 16px 8px;
+    padding: 16px 16px 0px;
     flex: 1;
 }
 
@@ -2357,7 +2359,7 @@ WHY SECTION
 
 .index-card__meta {
     display: flex;
-    gap: 16px;
+    gap: 10px;
     font-size: 13px;
     color: var(--text-sub, #6b7280);
 }
@@ -2668,10 +2670,11 @@ WHY SECTION
 /* Sidebar */
 .exam-sidebar {
     position: sticky;
-    top: 50px;
+    top: 20px;
     display: flex;
     flex-direction: column;
     gap: 30px;
+    align-self: start;
 }
 
 
@@ -2894,8 +2897,10 @@ WHY SECTION
         grid-template-columns: 1fr;
     }
     .exam-sidebar {
-        position: static;
+        position: sticky;
+        top: 70px;
         order: -1;
+        align-self: start;
     }
 }
 
@@ -6019,8 +6024,10 @@ WHY SECTION
     }
 
     .exam-sidebar {
-        position: static;
+        position: sticky;
+        top: 20px;
         order: -1;
+        align-self: start;
     }
 
     /* Post layout */
@@ -6174,8 +6181,10 @@ WHY SECTION
     .exam-layout { grid-template-columns: 1fr; }
 
     .exam-sidebar {
-        position: static;
+        position: sticky;
+        top: 20px;
         order: -1;
+        align-self: start;
     }
 
     /* Result */

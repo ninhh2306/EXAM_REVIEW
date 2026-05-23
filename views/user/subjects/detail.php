@@ -113,7 +113,7 @@ CONTENT LIST
                     <p class="content-block__empty">Môn học này chưa có đề thi</p>
                 <?php else: ?>
                     <ul class="content-block__list">
-                        <?php foreach(array_slice($exams, 0, 5) as $exam): ?>
+                        <?php foreach(array_slice($exams, 0, 6) as $exam): ?>
                         <li>
                             <?php if(empty($_SESSION['user_id'])): ?>
                                 <a href="javascript:void(0)" onclick="openLoginModal()">

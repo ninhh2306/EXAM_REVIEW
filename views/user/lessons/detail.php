@@ -104,7 +104,7 @@
                                     if ($count >= 5) break;
                                 ?>
                                 <li>
-                                    <a href="/<?= $grade['slug'] ?>/<?= $subject['slug'] ?>/trac-nghiem/<?= $exam['slug'] ?>">
+                                    <a href="/<?= $grade['slug'] ?>/<?= $subject['slug'] ?>/trac-nghiem/<?= $exam['slug'] ?>-<?= $exam['examId'] ?>">
                                         ▶ <?= $exam['title'] ?>
                                     </a>
                                 </li>

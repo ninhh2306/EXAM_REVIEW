@@ -12,7 +12,7 @@ class LessonController extends Controller
         $lessonModel = new Lesson();
 
         $total      = $lessonModel->countAll();
-        $perTab     = 5;
+        $perTab     = 15;
         $tabCount   = max(1, (int) ceil($total / $perTab));
         $currentTab = max(1, min($tabCount, (int)($_GET['tab'] ?? 1)));
         $offset     = ($currentTab - 1) * $perTab;

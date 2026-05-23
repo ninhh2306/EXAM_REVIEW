@@ -194,41 +194,63 @@ class Chapter extends Model
     }
 
 
-    public function increaseSortOrders($subjectId, $fromSort)
+    public function increaseSortOrders($subjectId, $fromSort, $excludeId = null)
     {
-        $sql = "
+        // Bước 1: Tăng lên một offset lớn để tránh duplicate tạm thời
+        $sql1 = "
             UPDATE chapters
-            SET sortOrder = sortOrder + 1
+            SET sortOrder = sortOrder + 10000
             WHERE subjectId = ?
             AND sortOrder >= ?
-            ORDER BY sortOrder DESC
         ";
+        $params1 = [$subjectId, $fromSort];
+        if ($excludeId) {
+            $sql1 .= " AND chapterId != ?";
+            $params1[] = $excludeId;
+        }
+        $stmt1 = $this->db->prepare($sql1);
+        $stmt1->execute($params1);
 
-        $stmt = $this->db->prepare($sql);
-
-        return $stmt->execute([
-            $subjectId,
-            $fromSort
-        ]);
+        // Bước 2: Trả về giá trị thực (offset - 10000 + 1)
+        $sql2 = "
+            UPDATE chapters
+            SET sortOrder = sortOrder - 9999
+            WHERE subjectId = ?
+            AND sortOrder >= ?
+        ";
+        $params2 = [$subjectId, $fromSort + 10000];
+        if ($excludeId) {
+            $sql2 .= " AND chapterId != ?";
+            $params2[] = $excludeId;
+        }
+        $stmt2 = $this->db->prepare($sql2);
+        return $stmt2->execute($params2);
     }
 
 
     public function decreaseSortOrders($subjectId, $fromSort)
     {
-        $sql = "
+        // Bước 1: Tăng lên offset lớn trước
+        $sql1 = "
             UPDATE chapters
-            SET sortOrder = sortOrder - 1
+            SET sortOrder = sortOrder + 10000
             WHERE subjectId = ?
             AND sortOrder > ?
             ORDER BY sortOrder ASC
         ";
+        $stmt1 = $this->db->prepare($sql1);
+        $stmt1->execute([$subjectId, $fromSort]);
 
-        $stmt = $this->db->prepare($sql);
-
-        return $stmt->execute([
-            $subjectId,
-            $fromSort
-        ]);
+        // Bước 2: Trừ đi (offset + 1) để giảm 1 so với giá trị gốc
+        $sql2 = "
+            UPDATE chapters
+            SET sortOrder = sortOrder - 10001
+            WHERE subjectId = ?
+            AND sortOrder > ?
+            ORDER BY sortOrder ASC
+        ";
+        $stmt2 = $this->db->prepare($sql2);
+        return $stmt2->execute([$subjectId, $fromSort + 10000]);
     }
 
 
