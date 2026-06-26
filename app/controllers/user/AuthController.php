@@ -482,10 +482,18 @@ class AuthController extends Controller
 
         $userModel = new User();
 
-        $userModel->updatePasswordByEmail(
+        $rowsUpdated = $userModel->updatePasswordByEmail(
             $_SESSION['reset_email'],
             $hash
         );
+
+        if (!$rowsUpdated) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Không tìm thấy tài khoản để cập nhật. Email: ' . $_SESSION['reset_email']
+            ]);
+            exit;
+        }
 
         // clear
         unset(

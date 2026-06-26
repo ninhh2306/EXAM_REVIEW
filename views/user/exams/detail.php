@@ -164,6 +164,13 @@
 </section>
 
 
+<!-- BANNER MẤT KẾT NỐI -->
+<div id="offlineBanner">
+    <i class="fa-solid fa-wifi" style="margin-right:8px;"></i>
+    Mất kết nối mạng. Vui lòng kiểm tra lại!
+</div>
+
+
 <!-- MODAL XÁC NHẬN THOÁT TRANG -->
 <div id="exitModal" class="submit-modal">
     <div class="submit-modal__overlay"></div>
@@ -567,6 +574,63 @@ function showExamDeletedModal() {
 
     modal.classList.add('is-open');
 }
+
+
+// ── OFFLINE DETECTION ─────────────────────────────────────────
+let _isOffline = false;
+
+async function checkConnection() {
+    if (_isSubmitting) return;
+    try {
+        const res = await fetch('/api/exam-check?examId=' + examId + '&_=' + Date.now(), {
+            method: 'GET',
+            cache: 'no-store',
+            signal: AbortSignal.timeout(3000) 
+        });
+
+        if (res.ok) {
+            if (_isOffline) {
+                _isOffline = false;
+                hideOfflineBanner();
+            }
+        } else {
+            throw new Error('Server error');
+        }
+    } catch (e) {
+        if (!_isOffline) {
+            _isOffline = true;
+            showOfflineBanner();
+        }
+    }
+}
+
+function showOfflineBanner() {
+    document.getElementById('offlineBanner').style.display = 'block';
+}
+
+function hideOfflineBanner() {
+    document.getElementById('offlineBanner').style.display = 'none';
+}
+
+setInterval(checkConnection, 3000);
+
+checkConnection();
+
+
+window.addEventListener('offline', showOfflineBanner);
+window.addEventListener('online', function() {
+    checkConnection(); 
+});
+
+const _originalConfirmSubmit = confirmSubmit;
+window.confirmSubmit = function () {
+    if (_isOffline) {
+        closeSubmitModal();
+        showOfflineBanner();
+        return;
+    }
+    _originalConfirmSubmit();
+};
 
 
 </script>

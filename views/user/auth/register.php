@@ -133,8 +133,8 @@ $base = "";
 
                 <div class="divider">HOẶC</div>
 
-                <button type="button" class="btn-google">
-                    Tiếp tục với Google
+                 <button type="button" class="btn-google" onclick="loginSocial('google')">
+                    <i class="fa-brands fa-google"></i> Tiếp tục với Google
                 </button>
 
                 <p class="login-link">
@@ -152,6 +152,29 @@ $base = "";
 
 
 <script>
+
+function loginSocial(platform) {
+    let url = '';
+ 
+    if (platform === 'google') {
+        url = 'https://google.com';
+    }
+ 
+    const width = 500;
+    const height = 600;
+    const left = (window.innerWidth / 2) - (width / 2);
+    const top  = (window.innerHeight / 2) - (height / 2);
+ 
+    window.open(
+        url,
+        'LoginPopup',
+        `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,resizable=yes`
+    );
+ 
+    return false;
+}
+
+
 function togglePassword(inputId, icon) {
     const input = document.getElementById(inputId);
 

@@ -127,10 +127,12 @@ class User
 
         $stmt = $this->conn->prepare($sql);
 
-        return $stmt->execute([
+        $stmt->execute([
             'password' => $hashedPassword,
             'email'    => $email
         ]);
+
+        return $stmt->rowCount();
     }
 
 
